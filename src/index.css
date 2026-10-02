@@ -108,7 +108,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .filled { color: var(--ink-2); }
 
 .cur { position: relative; }
-.hint {
+.suggest {
   position: absolute;
   top: 100%;
   left: 0;
@@ -126,8 +126,8 @@ button:disabled { opacity: 0.4; cursor: default; }
   white-space: pre;
   pointer-events: none;
 }
-.hint b { color: var(--accent); font-weight: 600; }
-.hint kbd { font-size: 10px; }
+.suggest b { color: var(--accent); font-weight: 600; }
+.suggest kbd { font-size: 10px; }
 .auto { color: transparent; }
 
 .cur {

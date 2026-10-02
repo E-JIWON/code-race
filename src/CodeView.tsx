@@ -41,7 +41,7 @@ export function CodeView({ lines, chars, pos, wrong, ghostPos, peers, dim, fille
                 <span key={i} className={cls} style={color ? { boxShadow: `inset 2px 0 ${color}` } : undefined}>
                   {c.ch === '\n' ? (i === pos ? '↵' : c.typed ? ' ' : '') : c.ch}
                   {i === pos && hint && (
-                    <span className="hint">
+                    <span className="suggest">
                       <b>{hint.word.slice(0, hint.typed)}</b>{hint.word.slice(hint.typed)}<kbd>Tab</kbd>
                     </span>
                   )}
