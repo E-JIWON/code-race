@@ -1,10 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { buildLines, cpm, skipAuto, toChars, typedCount, type Char, type Line } from './engine'
+import { buildLines, closerOf, cpm, skipAuto, toChars, typedCount, wordAt, type Char, type Line } from './engine'
 import { ALL, LIBRARIES, blobUrl, findSnippet, libraryOf, nextSnippet, rawUrl, type Snippet } from './snippets'
 import { peerColor, useRoom } from './useRoom'
 import { CodeView } from './CodeView'
 
-type Round = { snippet: Snippet; lines: Line[]; chars: Char[] }
+type Round = { snippet: Snippet; lines: Line[]; chars: Char[]; pairs: Map<number, number> }
 type Best = { cpm: number; trail: [number, number][] }
 
 const fileCache = new Map<string, Promise<string>>()
@@ -19,7 +19,8 @@ const fetchText = (url: string) => {
 
 async function loadRound(snippet: Snippet): Promise<Round> {
   const lines = buildLines(await fetchText(rawUrl(snippet)), snippet)
-  return { snippet, lines, chars: toChars(lines) }
+  const chars = toChars(lines)
+  return { snippet, lines, chars, pairs: closerOf(chars) }
 }
 
 const store = {
@@ -44,32 +45,61 @@ type State = {
   trail: [number, number][] // [pos, 시작 후 ms] — 다음 판의 고스트
   wrong: boolean
   locked: boolean // 대결 대기·카운트다운 중엔 못 침
+  filled: Set<number> // 자동완성이 채운 닫는 괄호·따옴표
+  overtype: string | null // 방금 자동으로 넘긴 닫는 글자 — 또 쳐도 오타 아님
 }
 type Action =
   | { type: 'load'; round: Round; locked: boolean }
   | { type: 'go'; at: number }
-  | { type: 'key'; ch: string; at: number }
+  | { type: 'key'; ch: string; at: number; assist: boolean }
+  | { type: 'complete'; to: number; at: number }
 
 const fresh = (round: Round | null, locked = false): State => ({
   round, pos: round ? skipAuto(round.chars, 0) : 0, errors: 0, misses: {},
-  start: null, end: null, trail: [], wrong: false, locked,
+  start: null, end: null, trail: [], wrong: false, locked, filled: new Set(), overtype: null,
 })
+
+// from부터 직접 칠 글자까지 커서를 옮김 (들여쓰기·주석·자동완성된 글자는 건너뜀)
+function move(s: State, from: number, at: number, filled: Set<number>): State {
+  const chars = s.round!.chars
+  let pos = from
+  let overtype: string | null = null
+  while (pos < chars.length && (!chars[pos].typed || filled.has(pos))) {
+    if (filled.has(pos)) overtype = chars[pos].ch
+    pos++
+  }
+  const start = s.start ?? at
+  return {
+    ...s, pos, start, filled, overtype, wrong: false,
+    trail: [...s.trail, [pos, at - start]],
+    end: pos >= chars.length ? at : null,
+  }
+}
 
 function reducer(s: State, a: Action): State {
   if (a.type === 'load') return fresh(a.round, a.locked)
   if (a.type === 'go') return { ...s, locked: false, start: a.at }
   if (!s.round || s.locked || s.end !== null) return s
+  if (a.type === 'complete') return move(s, a.to, a.at, s.filled)
   const expected = s.round.chars[s.pos].ch
   if (a.ch !== expected) {
+    if (a.ch === s.overtype) return { ...s, overtype: null } // VS Code처럼 닫는 괄호 덮어쓰기
     return { ...s, wrong: true, errors: s.errors + 1, misses: { ...s.misses, [expected]: (s.misses[expected] ?? 0) + 1 } }
   }
-  const start = s.start ?? a.at
-  const pos = skipAuto(s.round.chars, s.pos + 1)
-  return {
-    ...s, pos, start, wrong: false,
-    trail: [...s.trail, [pos, a.at - start]],
-    end: pos >= s.round.chars.length ? a.at : null,
-  }
+  const closer = a.assist ? s.round.pairs.get(s.pos) : undefined
+  return move(s, s.pos + 1, a.at, closer === undefined ? s.filled : new Set(s.filled).add(closer))
+}
+
+// 이미 나온 단어나 자주 쓰는 키워드면 제안
+const KEYWORDS = new Set(
+  'const let var return function typeof export default import from if else for while true false null undefined this new async await interface type extends string number boolean unknown any void throw try catch finally Object Array Math JSON Promise Error'.split(' '),
+)
+function suggestion(chars: Char[], pos: number) {
+  const w = wordAt(chars, pos)
+  if (!w || pos - w[0] < 2 || w[1] - pos < 2) return null
+  const word = chars.slice(w[0], w[1]).map((c) => c.ch).join('')
+  const seen = chars.slice(0, w[0]).map((c) => c.ch).join('').split(/[^A-Za-z0-9_$]+/)
+  return KEYWORDS.has(word) || seen.includes(word) ? { word, typed: pos - w[0], end: w[1] } : null
 }
 
 const SHOW: Record<string, string> = { '\n': '↵ Enter', ' ': '␣ 스페이스' }
@@ -89,6 +119,7 @@ export default function App() {
   const [copied, setCopied] = useState(false)
   const raceToken = useRef('')
   const [, rerender] = useReducer((n: number) => n + 1, 0)
+  const [assist, setAssist] = useState(() => store.get<boolean>('assist') ?? true)
 
   const show = (snippet: Snippet, locked = !!roomId) => {
     setLoading(true)
@@ -165,7 +196,8 @@ export default function App() {
       if (e.metaKey || e.ctrlKey || e.altKey) return
       if (e.key === 'Tab') {
         e.preventDefault()
-        if (s.round && (!roomId || canStart)) show(nextSnippet(s.round.snippet.id))
+        if (hint) dispatch({ type: 'complete', to: hint.end, at: performance.now() })
+        else if (s.round && !running && (!roomId || canStart)) show(nextSnippet(s.round.snippet.id))
         return
       }
       if (e.key === 'Escape') { if (!roomId) retry(); return }
@@ -175,7 +207,7 @@ export default function App() {
       if (ch.length !== 1) return
       e.preventDefault()
       setImeWarn(false)
-      dispatch({ type: 'key', ch, at: performance.now() })
+      dispatch({ type: 'key', ch, at: performance.now(), assist })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -190,6 +222,7 @@ export default function App() {
   }, [running])
 
   const chars = s.round?.chars ?? []
+  const hint = assist && !s.locked && s.end === null ? suggestion(chars, s.pos) : null
   const elapsed = s.start === null ? 0 : (s.end ?? now) - s.start
   const typed = typedCount(chars, s.pos)
   const total = typedCount(chars, chars.length)
@@ -209,6 +242,7 @@ export default function App() {
   }, [s.pos, finished]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => store.set('name', name), [name])
+  useEffect(() => store.set('assist', assist), [assist])
 
   if (error) {
     return (
@@ -309,7 +343,10 @@ export default function App() {
         <span><b>{liveCpm}</b> 타/분</span>
         <span><b>{accuracy}</b>% 정확도</span>
         <span><b>{(elapsed / 1000).toFixed(1)}</b>초</span>
-        {best && !roomId &&<span className="ghost-label">👻 고스트 {best.cpm} 타/분</span>}
+        {best && !roomId && <span className="ghost-label">👻 고스트 {best.cpm} 타/분</span>}
+        <button className={`assist ${assist ? 'on' : ''}`} onClick={(e) => { setAssist(!assist); e.currentTarget.blur() }}>
+          자동완성 {assist ? '켬' : '끔'}
+        </button>
       </div>
 
       <CodeView
@@ -320,6 +357,8 @@ export default function App() {
         ghostPos={ghostPos}
         peers={racers.map(([id, p]) => ({ pos: p.pos ?? 0, color: peerColor(id) }))}
         dim={loading || s.locked}
+        filled={s.filled}
+        hint={hint}
       />
 
       {imeWarn && <p className="warn">한글 입력 중이에요. 한/영 키를 눌러 영어로 바꿔 주세요.</p>}

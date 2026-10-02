@@ -8,9 +8,11 @@ type Props = {
   ghostPos: number
   peers: { pos: number; color: string }[]
   dim: boolean
+  filled: Set<number> // 자동완성이 미리 채운 닫는 글자
+  hint: { word: string; typed: number } | null // 커서 아래 단어 제안
 }
 
-export function CodeView({ lines, chars, pos, wrong, ghostPos, peers, dim }: Props) {
+export function CodeView({ lines, chars, pos, wrong, ghostPos, peers, dim, filled, hint }: Props) {
   const peerAt = new Map(peers.map((p) => [p.pos, p.color]))
   const byLine: [Char, number][][] = lines.map(() => [])
   chars.forEach((c, i) => byLine[c.line].push([c, i]))
@@ -29,7 +31,7 @@ export function CodeView({ lines, chars, pos, wrong, ghostPos, peers, dim }: Pro
               </>
             ) : byLine[li].map(([c, i]) => {
               const cls = [
-                c.comment ? 'cm' : !c.typed ? 'auto' : i < pos ? 'done' : 'todo',
+                c.comment ? 'cm' : !c.typed ? 'auto' : i < pos ? 'done' : filled.has(i) ? 'filled' : 'todo',
                 i === pos && (wrong ? 'cur wrong' : 'cur'),
                 i === ghostPos && i > pos && 'ghost',
                 c.ch === '\n' && 'nl',
@@ -38,6 +40,11 @@ export function CodeView({ lines, chars, pos, wrong, ghostPos, peers, dim }: Pro
               return (
                 <span key={i} className={cls} style={color ? { boxShadow: `inset 2px 0 ${color}` } : undefined}>
                   {c.ch === '\n' ? (i === pos ? '↵' : c.typed ? ' ' : '') : c.ch}
+                  {i === pos && hint && (
+                    <span className="hint">
+                      <b>{hint.word.slice(0, hint.typed)}</b>{hint.word.slice(hint.typed)}<kbd>Tab</kbd>
+                    </span>
+                  )}
                 </span>
               )
             })}

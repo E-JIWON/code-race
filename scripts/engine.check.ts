@@ -1,6 +1,6 @@
 // node scripts/engine.check.ts 로 실행 (--net 붙이면 실제 소스로 문제 전부 검사)
 import assert from 'node:assert/strict'
-import { buildLines, skipAuto, toChars, typedCount, type Block } from '../src/engine.ts'
+import { buildLines, closerOf, skipAuto, toChars, typedCount, wordAt, type Block } from '../src/engine.ts'
 import { LIBRARIES, rawUrl } from '../src/snippets.ts'
 
 const render = (raw: string, b: Partial<Block> = {}) =>
@@ -25,6 +25,14 @@ const shape = chars.map((c) => (c.typed ? (c.ch === '\n' ? '↵' : c.ch) : '_'))
 assert.equal(shape, 'a↵' + '_'.repeat(10) + 'b') // 들여쓰기2 + '// 설명'5 + ↵ + 들여쓰기2
 assert.equal(skipAuto(chars, 2), chars.length - 1)
 assert.equal(typedCount(chars, chars.length), 3) // a, ↵, b
+
+// 자동완성: 괄호·따옴표 짝 (문자열 안 괄호는 무시), 커서 아래 단어
+const pc = toChars(buildLines("f(a[0], ')', {\n  b: 'x'\n})", { from: 1, to: 3, lang: 'js' }))
+const text = pc.map((c) => c.ch).join('')
+const pairs = [...closerOf(pc)].map(([o, c]) => text[o] + text[c] + (c - o))
+assert.deepEqual(pairs, ['[]2', "''2", "''2", '{}11', '()24'])
+assert.deepEqual(wordAt(pc, 0), [0, 1]) // 'f'
+assert.equal(wordAt(pc, 1), null) // '('는 단어가 아님
 
 if (process.argv.includes('--net')) {
   for (const lib of LIBRARIES) {

@@ -127,6 +127,39 @@ export function toChars(lines: Line[]): Char[] {
   return out
 }
 
+// 자동완성용: 여는 괄호·따옴표 위치 → 짝이 되는 닫는 위치
+const OPEN: Record<string, string> = { '(': ')', '[': ']', '{': '}' }
+export function closerOf(chars: Char[]): Map<number, number> {
+  const pairs = new Map<number, number>()
+  const stack: number[] = []
+  let quote = -1
+  chars.forEach((c, i) => {
+    if (!c.typed) return
+    if (quote >= 0) {
+      if (c.ch === chars[quote].ch && chars[i - 1].ch !== '\\') {
+        pairs.set(quote, i)
+        quote = -1
+      } else if (c.ch === '\n') quote = -1
+      return
+    }
+    if (c.ch === "'" || c.ch === '"' || c.ch === '`') quote = i
+    else if (OPEN[c.ch]) stack.push(i)
+    else if (stack.length && OPEN[chars[stack[stack.length - 1]].ch] === c.ch) pairs.set(stack.pop()!, i)
+  })
+  return pairs
+}
+
+// 자동완성용: 커서가 단어 중간이면 그 단어의 [시작, 끝]
+const WORD = /[A-Za-z0-9_$]/
+export function wordAt(chars: Char[], pos: number): [number, number] | null {
+  if (!chars[pos]?.typed || !WORD.test(chars[pos].ch)) return null
+  let s = pos
+  while (s > 0 && chars[s - 1].typed && WORD.test(chars[s - 1].ch)) s--
+  let e = pos
+  while (e < chars.length && chars[e].typed && WORD.test(chars[e].ch)) e++
+  return [s, e]
+}
+
 export const skipAuto = (chars: Char[], pos: number) => {
   while (pos < chars.length && !chars[pos].typed) pos++
   return pos
