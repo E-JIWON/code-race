@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { cpm, parseLines, skipAuto, toChars, typedCount, type Char, type Line } from './engine'
-import { LANG_LABEL, SNIPPETS, blobUrl, findSnippet, randomSnippet, rawUrl, type Snippet } from './snippets'
+import { buildLines, cpm, skipAuto, toChars, typedCount, type Char, type Line } from './engine'
+import { ALL, LIBRARIES, blobUrl, findSnippet, libraryOf, nextSnippet, rawUrl, type Snippet } from './snippets'
 import { peerColor, useRoom } from './useRoom'
 import { CodeView } from './CodeView'
 
@@ -18,7 +18,7 @@ const fetchText = (url: string) => {
 }
 
 async function loadRound(snippet: Snippet): Promise<Round> {
-  const lines = parseLines(await fetchText(rawUrl(snippet)), snippet.from, snippet.to, snippet.lang)
+  const lines = buildLines(await fetchText(rawUrl(snippet)), snippet)
   return { snippet, lines, chars: toChars(lines) }
 }
 
@@ -81,7 +81,6 @@ export default function App() {
   const [imeWarn, setImeWarn] = useState(false)
   const [now, setNow] = useState(0)
   const [best, setBest] = useState<Best | null>(null)
-  const [hl, setHl] = useState<number | null>(null)
 
   const [roomId, setRoomId] = useState(() => new URLSearchParams(location.search).get('room'))
   const [name, setName] = useState(() => store.get<string>('name') ?? NICKS[Math.floor(Math.random() * NICKS.length)])
@@ -89,13 +88,18 @@ export default function App() {
   const [count, setCount] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   const raceToken = useRef('')
+  const [, rerender] = useReducer((n: number) => n + 1, 0)
 
   const show = (snippet: Snippet, locked = !!roomId) => {
     setLoading(true)
     setError(false)
     setRaceId(null)
     loadRound(snippet)
-      .then((round) => { setBest(store.get(`best:${snippet.id}`)); dispatch({ type: 'load', round, locked }) })
+      .then((round) => {
+        store.set('last', snippet.id)
+        setBest(store.get(`best:${snippet.id}`))
+        dispatch({ type: 'load', round, locked })
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }
@@ -124,8 +128,8 @@ export default function App() {
   const canStart = !!roomId && count === null && (s.locked || s.end !== null)
   const startRace = () => {
     if (!s.round) return
-    // 방금 끝낸 판이면 새 코드, 대기 중이면 지금 보고 있는 코드로
-    const id = s.end !== null ? randomSnippet(s.round.snippet.id).id : s.round.snippet.id
+    // 방금 끝낸 판이면 코스의 다음 함수, 대기 중이면 지금 보고 있는 코드로
+    const id = s.end !== null ? nextSnippet(s.round.snippet.id).id : s.round.snippet.id
     const start = { race: crypto.randomUUID().slice(0, 8), id }
     room.sendStart(start)
     void beginRace(start)
@@ -153,7 +157,7 @@ export default function App() {
     })
   }
 
-  useEffect(() => show(randomSnippet()), []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => show(findSnippet(store.get<string>('last') ?? '') ?? ALL[0]), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -161,7 +165,7 @@ export default function App() {
       if (e.metaKey || e.ctrlKey || e.altKey) return
       if (e.key === 'Tab') {
         e.preventDefault()
-        if (!roomId || canStart) show(randomSnippet(s.round?.snippet.id))
+        if (s.round && (!roomId || canStart)) show(nextSnippet(s.round.snippet.id))
         return
       }
       if (e.key === 'Escape') { if (!roomId) retry(); return }
@@ -196,6 +200,7 @@ export default function App() {
   useEffect(() => {
     if (!finished || !s.round) return
     if (!best || liveCpm > best.cpm) store.set(`best:${s.round.snippet.id}`, { cpm: liveCpm, trail: s.trail })
+    rerender() // 함수 칩에 ✓ 바로 표시
   }, [finished]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -209,13 +214,15 @@ export default function App() {
     return (
       <main className="wrap">
         <p className="dim">코드를 못 불러왔어요. 인터넷 연결을 확인해 주세요.</p>
-        <button onClick={() => show(s.round?.snippet ?? randomSnippet())}>다시 시도</button>
+        <button onClick={() => show(s.round?.snippet ?? ALL[0])}>다시 시도</button>
       </main>
     )
   }
   if (!s.round) return <main className="wrap"><p className="dim">코드 가져오는 중…</p></main>
 
   const { snippet, lines } = s.round
+  const lib = libraryOf(snippet.id)
+  const pickLocked = !!roomId && !canStart
   const ghostPos = !roomId && best && s.start !== null ? (best.trail.findLast(([, ms]) => ms <= elapsed)?.[0] ?? -1) : -1
   const weak = Object.entries(s.misses).sort((a, b) => b[1] - a[1]).slice(0, 3)
   const newRecord = finished && (!best || liveCpm > best.cpm)
@@ -235,23 +242,41 @@ export default function App() {
     <main className="wrap">
       <header>
         <h1>코드 타자 레이스</h1>
-        <div className="head-actions">
-          <select
-            value={snippet.id}
-            disabled={!!roomId && !canStart}
-            onChange={(e) => { show(findSnippet(e.target.value)!); e.target.blur() }}
-          >
-            {SNIPPETS.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}
-          </select>
-          {roomId ? <button onClick={leaveRoom}>혼자 하기</button> : <button onClick={enterRoom}>친구랑 대결</button>}
-        </div>
+        {roomId ? <button onClick={leaveRoom}>혼자 하기</button> : <button onClick={enterRoom}>친구랑 대결</button>}
       </header>
 
+      <nav className="libs">
+        {LIBRARIES.map((l) => (
+          <button
+            key={l.id}
+            className={l.id === lib.id ? 'on' : ''}
+            disabled={pickLocked}
+            onClick={() => show(l.items[0])}
+          >
+            {l.name}
+          </button>
+        ))}
+      </nav>
+      <p className="blurb">{lib.blurb}</p>
+      <nav className="fns">
+        {lib.items.map((x, i) => (
+          <button
+            key={x.id}
+            className={x.id === snippet.id ? 'on' : ''}
+            disabled={pickLocked}
+            onClick={() => show(x)}
+          >
+            <span className="idx">{i + 1}</span>
+            {x.title}
+            {store.get(`best:${x.id}`) !== null && <span className="check">✓</span>}
+          </button>
+        ))}
+      </nav>
+
       <p className="about">
-        <a href={blobUrl(snippet)} target="_blank" rel="noreferrer">{snippet.repo}/{snippet.path}</a>
-        <span className="tag">{LANG_LABEL[snippet.lang]}</span>
-        <br />
         {snippet.summary}
+        <br />
+        <a href={blobUrl(snippet)} target="_blank" rel="noreferrer">{snippet.repo}/{snippet.path}</a>
       </p>
 
       {roomId && (
@@ -294,8 +319,6 @@ export default function App() {
         wrong={s.wrong}
         ghostPos={ghostPos}
         peers={racers.map(([id, p]) => ({ pos: p.pos ?? 0, color: peerColor(id) }))}
-        notedLines={finished ? new Set(snippet.notes.map((n) => n.line)) : new Set()}
-        highlight={hl}
         dim={loading || s.locked}
       />
 
@@ -312,27 +335,16 @@ export default function App() {
             {!roomId && (
               <div className="actions">
                 <button onClick={retry}>고스트랑 다시 <kbd>Esc</kbd></button>
-                <button onClick={() => show(randomSnippet(snippet.id))}>다음 코드 <kbd>Tab</kbd></button>
+                <button onClick={() => show(nextSnippet(snippet.id))}>다음 함수 <kbd>Tab</kbd></button>
               </div>
             )}
-          </section>
-          <section className="notes">
-            <h2>해설</h2>
-            <ul>
-              {snippet.notes.map((n) => (
-                <li key={n.line} onMouseEnter={() => setHl(n.line)} onMouseLeave={() => setHl(null)}>
-                  <span className="lno">{n.line}</span>
-                  {n.text}
-                </li>
-              ))}
-            </ul>
           </section>
         </>
       ) : (
         <p className="dim hint">
           {roomId
-            ? s.locked ? '시작을 누르면 모두 같이 3초 뒤 출발해요 · 주석은 안 쳐도 돼요' : '주석·들여쓰기는 자동으로 넘어가요'
-            : <>그냥 치면 시작돼요 · 주석·들여쓰기는 자동 · <kbd>Tab</kbd> 다른 코드 · <kbd>Esc</kbd> 처음부터</>}
+            ? s.locked ? '시작을 누르면 모두 같이 3초 뒤 출발해요 · 한글 주석은 안 쳐도 돼요' : '주석·들여쓰기는 자동으로 넘어가요'
+            : <>그냥 치면 시작돼요 · 한글 주석·들여쓰기는 자동 · <kbd>Tab</kbd> 다음 함수 · <kbd>Esc</kbd> 처음부터</>}
         </p>
       )}
     </main>

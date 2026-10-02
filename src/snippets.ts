@@ -1,241 +1,393 @@
-// 유명 오픈소스의 의미 있는 블록 + 해설.
-// sha로 커밋을 고정해서 줄 번호(from/to, notes.line)가 바뀌지 않음.
-// 노트 줄이 코드 줄인지는 `node scripts/engine.check.ts --net`으로 확인.
-import type { Lang } from './engine'
+// 프론트 라이브러리별 핵심 함수 + 한글 해설.
+// sha로 커밋을 고정해서 줄 번호(from/to, notes, skip)가 바뀌지 않음.
+// 해설 줄이 실제 코드 줄인지는 `node scripts/engine.check.ts --net`으로 확인.
+import type { Block } from './engine'
 
-export type Note = { line: number; text: string }
-export type Snippet = {
+export type Snippet = Block & {
   id: string
   title: string
   repo: string
   sha: string
   path: string
-  lang: Lang
-  from: number
-  to: number
   summary: string
-  notes: Note[]
+  notes: { line: number; text: string }[]
 }
+export type Library = { id: string; name: string; blurb: string; items: Snippet[] }
 
-const REACT = '7c6ac13e19fef500b7f669a16bbd01ecc95965ca'
-const REDUX = '56abca4749921d68f40cda20afd2043af9751f72'
-const ZUSTAND = 'd7a5583cffd80af515f7dfb69583c95cbdc9e2ce'
-const SVELTE = '020242d6bef059df9ae8c13dc8dbff4c9b31e0ff'
-const CLASSNAMES = 'abd6314010de053a09df5acc53e474ff65cea470'
-const CLSX = '925494cf31bcd97d3337aacd34e659e80cae7fe2'
-const PREACT = '3fcc391adc243d479ab10b4cf70fa609708c9348'
-const TANSTACK = '94e20031dd0a392831330614b532b3a3b74b3a21'
-const VUE = '4ab865a848a1da3d10fb674f857e5fff13094644'
-const EXPRESS = '7ef98448f8b38099ab1ded55e458538ad47a51e7'
-const CPYTHON = 'ee782e6143b3fda2e7feb1216ff23860ad39b234'
-const GO = '67c1d421161d3d1ae9f5fd005e84c29fd0d9f896'
-const LINUX = 'ce1e0223d8ad4211275c82a17ed6d43ab81e13d9'
+const ZUSTAND = { repo: 'pmndrs/zustand', sha: 'd7a5583cffd80af515f7dfb69583c95cbdc9e2ce' }
+const QUERY = { repo: 'TanStack/query', sha: '94e20031dd0a392831330614b532b3a3b74b3a21' }
+const JOTAI = { repo: 'pmndrs/jotai', sha: '6abd0ae3365e02ab432fba4b6e8e6f00aafbf508' }
+const REDUX = { repo: 'reduxjs/redux', sha: '56abca4749921d68f40cda20afd2043af9751f72' }
+const REACT = { repo: 'facebook/react', sha: '7c6ac13e19fef500b7f669a16bbd01ecc95965ca' }
+const CLSX = { repo: 'lukeed/clsx', sha: '925494cf31bcd97d3337aacd34e659e80cae7fe2' }
+const NANOID = { repo: 'ai/nanoid', sha: 'bb68abcd59ebb86a849d634320726add6be54d47' }
+const MITT = { repo: 'developit/mitt', sha: '6b41670516ed8e8b738612f60491995470aa63b3' }
+const SWR = { repo: 'vercel/swr', sha: '9ed1240a4cf799e316a793c22c6800cc6482d389' }
 
-export const LANG_LABEL: Record<Lang, string> = {
-  js: 'JavaScript', ts: 'TypeScript', py: 'Python', go: 'Go', c: 'C',
-}
+const QUERY_UTILS = 'packages/query-core/src/utils.ts'
+const REDUX_STORE = 'src/createStore.ts'
 
-export const SNIPPETS: Snippet[] = [
+export const LIBRARIES: Library[] = [
   {
-    id: 'react-shallow-equal', title: 'React · shallowEqual',
-    repo: 'facebook/react', sha: REACT, path: 'packages/shared/shallowEqual.js', lang: 'js', from: 13, to: 52,
-    summary: '두 객체의 첫 단계 속성만 비교해요. React.memo와 PureComponent가 "props가 바뀌었나?"를 판단할 때 쓰는 함수예요.',
-    notes: [
-      { line: 19, text: 'is는 Object.is예요. ===와 거의 같지만 NaN끼리는 같다고, +0과 -0은 다르다고 봐요.' },
-      { line: 32, text: '키 목록을 뽑아서 개수부터 비교해요. 개수가 다르면 볼 것도 없이 다른 객체예요.' },
-      { line: 43, text: 'objB에 그 키가 정말 있는지 확인해요. 값이 undefined인 키와 아예 없는 키를 구분하려는 거예요.' },
-      { line: 45, text: '값은 한 단계만 비교해요. 안쪽 객체는 참조만 보니까, 렌더마다 새 객체를 만들어 넘기면 매번 "바뀌었다"가 돼요.' },
+    id: 'zustand', name: 'zustand',
+    blurb: '가장 가벼운 리액트 상태 관리. 스토어 → 훅 → 최적화 → 미들웨어 순서로 읽어요.',
+    items: [
+      {
+        ...ZUSTAND, id: 'zustand-create-store', title: 'createStore', path: 'src/vanilla.ts', lang: 'ts', from: 60, to: 97,
+        summary: 'zustand 스토어의 본체예요. 상태 하나와 구독자 Set 하나가 전부예요. 리액트 없이도 돌아가요.',
+        notes: [
+          { line: 64, text: '구독자 목록. Set이라 같은 함수는 한 번만 들어가요' },
+          { line: 69, text: 'set(state => ...)처럼 함수가 오면 현재 상태로 불러서 다음 상태를 만들어요' },
+          { line: 73, text: '같은 값이면 아무것도 안 해요 → 같은 값을 넣으면 리렌더도 없어요' },
+          { line: 75, text: '기본은 얕은 병합. replace거나 객체가 아니면 통째로 바꿔요' },
+          { line: 79, text: '모든 구독자에게 (새 상태, 이전 상태)를 알려요' },
+          { line: 88, text: '구독하면 해지 함수를 돌려줘요' },
+          { line: 95, text: '초기 상태는 createState(set, get, api)로 만들어요\n그래서 스토어 안에 액션을 같이 정의할 수 있어요' },
+        ],
+      },
+      {
+        ...ZUSTAND, id: 'zustand-use-store', title: 'useStore', path: 'src/react.ts', lang: 'ts', from: 26, to: 37,
+        summary: '스토어를 리액트 컴포넌트에 연결하는 훅이에요. 리액트 내장 훅 하나로 끝나요.',
+        notes: [
+          { line: 30, text: 'React 18의 useSyncExternalStore로 외부 스토어를 구독해요' },
+          { line: 31, text: '1) 바뀌면 알려줄 구독 함수' },
+          { line: 32, text: '2) 지금 값 — selector로 필요한 조각만 꺼내요' },
+          { line: 33, text: '3) 서버 렌더링 때 쓸 값 — 초기 상태 기준' },
+          { line: 35, text: 'React DevTools에 지금 값을 보여줘요' },
+        ],
+      },
+      {
+        ...ZUSTAND, id: 'zustand-create', title: 'create', path: 'src/react.ts', lang: 'ts', from: 53, to: 61,
+        summary: "우리가 쓰는 create((set) => ({ ... }))예요. 스토어를 만들고 그 스토어에 묶인 훅을 돌려줘요.",
+        notes: [
+          { line: 54, text: '먼저 리액트 없는 순수 스토어를 만들고' },
+          { line: 56, text: '그 스토어에 묶인 훅을 만들어요 → useBearStore(s => s.bears)' },
+          { line: 58, text: '훅 함수에 스토어 메서드를 붙여요\n그래서 useBearStore.getState()도 돼요' },
+        ],
+      },
+      {
+        ...ZUSTAND, id: 'zustand-shallow', title: 'shallow', path: 'src/vanilla/shallow.ts', lang: 'ts', from: 48, to: 74,
+        summary: '두 값을 한 단계만 비교해요. 객체뿐 아니라 배열·Map·Set도 다뤄요.',
+        notes: [
+          { line: 49, text: '참조가 같으면 끝' },
+          { line: 52, text: '둘 중 하나라도 객체가 아니면 다른 값' },
+          { line: 60, text: '프로토타입이 다르면(배열 vs 객체 등) 다른 값' },
+          { line: 63, text: 'Map·Set·배열처럼 순회 가능한 값이면' },
+          { line: 64, text: 'entries()가 있으면(Map 등) 키-값 쌍으로, 없으면 순서대로 비교' },
+          { line: 70, text: '평범한 객체는 Object.entries로 바꿔서 같은 방식으로 비교' },
+        ],
+      },
+      {
+        ...ZUSTAND, id: 'zustand-use-shallow', title: 'useShallow', path: 'src/react/shallow.ts', lang: 'ts', from: 4, to: 12,
+        summary: 'useStore(useShallow(s => [s.a, s.b]))처럼 쓰는 그거예요. 매번 새 배열을 만들어도 리렌더를 막아줘요.',
+        notes: [
+          { line: 5, text: '이전 선택 결과를 ref에 기억해 둬요' },
+          { line: 7, text: '새로 고른 값이' },
+          { line: 8, text: '얕게 같으면 이전 참조를 그대로 돌려줘요\n→ 참조가 안 바뀌니 리렌더도 없어요' },
+        ],
+      },
+      {
+        ...ZUSTAND, id: 'zustand-subscribe-with-selector', title: 'subscribeWithSelector', path: 'src/middleware/subscribeWithSelector.ts', lang: 'ts', from: 46, to: 71,
+        summary: '상태의 일부만 골라서 구독하게 해주는 미들웨어예요. 미들웨어가 api를 덮어쓰는 방식을 볼 수 있어요.',
+        notes: [
+          { line: 50, text: '원래 subscribe를 챙겨 두고 덮어써요' },
+          { line: 52, text: '인자가 하나면 예전처럼 상태 전체를 구독' },
+          { line: 54, text: '비교 함수 기본값은 Object.is' },
+          { line: 56, text: '상태가 바뀔 때마다 고른 조각만 비교해서' },
+          { line: 58, text: '조각이 달라졌을 때만 리스너를 불러요' },
+          { line: 63, text: 'fireImmediately면 구독하자마자 한 번 불러요' },
+          { line: 69, text: '초기 상태는 원래 함수로 그대로 만들어요' },
+        ],
+      },
     ],
   },
   {
-    id: 'redux-compose', title: 'Redux · compose',
-    repo: 'reduxjs/redux', sha: REDUX, path: 'src/compose.ts', lang: 'ts', from: 46, to: 61,
-    summary: '함수 여러 개를 오른쪽부터 차례로 실행하는 함수 하나로 합쳐요. compose(f, g, h)는 (...args) => f(g(h(...args)))와 같아요. 미들웨어를 겹겹이 감쌀 때 써요.',
-    notes: [
-      { line: 49, text: '함수가 하나도 없으면 받은 값을 그대로 돌려주는 함수를 줘요. 부르는 쪽에서 빈 경우를 따로 처리할 필요가 없어요.' },
-      { line: 53, text: '하나면 감쌀 필요 없이 그 함수 그대로예요.' },
-      { line: 56, text: '핵심은 reduce 한 줄이에요. 지금까지 합친 함수 a가 다음 함수 b의 결과를 받도록 계속 감싸요.' },
+    id: 'tanstack-query', name: 'TanStack Query',
+    blurb: '서버 상태 캐싱. 캐시 키를 만드는 법부터 알림을 모아 보내는 법까지.',
+    items: [
+      {
+        ...QUERY, id: 'query-hash-key', title: 'hashKey', path: QUERY_UTILS, lang: 'ts', from: 284, to: 295,
+        summary: "쿼리 키를 문자열로 바꿔서 캐시 이름표로 써요. ['todos', { page: 1 }]이 같은 캐시인지 이걸로 판단해요.",
+        notes: [
+          { line: 285, text: 'JSON.stringify의 두 번째 인자(replacer)로 값을 바꿔치기해요' },
+          { line: 286, text: '평범한 객체면 키를 정렬한 새 객체로 바꿔요\n→ { a, b }와 { b, a }가 같은 캐시 키가 돼요' },
+        ],
+      },
+      {
+        ...QUERY, id: 'query-partial-match-key', title: 'partialMatchKey', path: QUERY_UTILS, lang: 'ts', from: 301, to: 331,
+        summary: "invalidateQueries({ queryKey: ['todos'] })가 ['todos', 1]까지 무효화하는 원리예요. b가 a의 앞부분과 맞으면 일치예요.",
+        notes: [
+          { line: 302, text: '완전히 같으면 일치' },
+          { line: 312, text: '배열은 b가 더 길면 실패, 아니면 b 길이만큼만 비교' },
+          { line: 314, text: '칸마다 재귀로 비교해요 (안쪽 객체도 부분 일치)' },
+          { line: 321, text: '객체는 b에 있는 키만 확인해요. a에 키가 더 있어도 괜찮아요' },
+        ],
+      },
+      {
+        ...QUERY, id: 'query-replace-equal-deep', title: 'replaceEqualDeep', path: QUERY_UTILS, lang: 'ts', from: 341, to: 387,
+        summary: '새 데이터에서 이전과 같은 부분은 이전 객체를 그대로 재사용해요(구조적 공유). 그래서 안 바뀐 컴포넌트는 리렌더되지 않아요.',
+        notes: [
+          { line: 342, text: '참조가 같으면 바로 이전 것을 돌려줘요' },
+          { line: 346, text: '500단계보다 깊으면 비교를 포기해요 (안전장치)' },
+          { line: 350, text: '배열끼리나 평범한 객체끼리가 아니면 새 값을 그대로 써요' },
+          { line: 365, text: '항목이 같으면 이전 항목을 넣고, 같은 항목 수를 세요' },
+          { line: 381, text: '객체끼리면 재귀로 들어가요\n안쪽만 바뀌어도 바깥은 새 객체, 안 바뀐 형제는 이전 참조 그대로' },
+          { line: 386, text: '전부 같았으면 복사본을 버리고 이전 객체를 통째로 돌려줘요' },
+        ],
+      },
+      {
+        ...QUERY, id: 'query-subscribable', title: 'Subscribable', path: 'packages/query-core/src/subscribable.ts', lang: 'ts', from: 6, to: 52,
+        summary: 'QueryCache, 옵저버, focusManager 같은 "구독할 수 있는 것"들의 공통 부모 클래스예요.',
+        notes: [
+          { line: 7, text: '리스너는 Set에 모아요' },
+          { line: 10, text: '메서드를 this에 묶어 둬요\n→ subscribe만 떼어서 넘겨도 this가 안 깨져요' },
+          { line: 30, text: '자식 클래스가 "첫 구독" 같은 순간을 알 수 있게 불러줘요' },
+          { line: 32, text: '해지 함수를 돌려줘요' },
+          { line: 45, text: '자식 클래스가 덮어쓰는 자리 (기본은 아무것도 안 함)' },
+        ],
+      },
+      {
+        ...QUERY, id: 'query-notify-manager', title: 'notifyManager', path: 'packages/query-core/src/notifyManager.ts', lang: 'ts', from: 21, to: 137,
+        skip: [{ from: 75, to: 135, text: 'batchCalls · schedule · 설정 함수들 (생략)' }],
+        summary: '쿼리 상태가 여러 번 바뀌어도 리렌더는 한 번만 일어나게, 알림을 모아서(batch) 보내요.',
+        notes: [
+          { line: 22, text: '모아 둘 알림 큐와, 지금 batch 안에 몇 겹 들어와 있는지' },
+          { line: 33, text: 'batch 안이면 큐에 쌓고' },
+          { line: 36, text: '아니면 다음 틱(setTimeout 0)에 바로 알려요' },
+          { line: 41, text: '큐를 비우면서 쌓인 알림을 한꺼번에 보내요' },
+          { line: 64, text: 'batch는 중첩될 수 있어서 카운트로 세요' },
+          { line: 69, text: '가장 바깥 batch가 끝날 때만 flush해요' },
+        ],
+      },
+      {
+        ...QUERY, id: 'query-helpers', title: '작은 도우미들', path: QUERY_UTILS, lang: 'ts', from: 123, to: 138,
+        summary: '쿼리 코어 곳곳에서 쓰는 한 줄짜리 도우미들이에요.',
+        notes: [
+          { line: 127, text: 'setQueryData(old => ...)처럼 함수면 불러서, 값이면 그대로' },
+          { line: 133, text: '타임아웃으로 쓸 수 있는 숫자인지 (0 이상, 무한대 아님)' },
+          { line: 137, text: 'staleTime이 지나기까지 남은 ms. 이미 지났으면 0' },
+        ],
+      },
     ],
   },
   {
-    id: 'zustand-create-store', title: 'zustand · createStore',
-    repo: 'pmndrs/zustand', sha: ZUSTAND, path: 'src/vanilla.ts', lang: 'ts', from: 60, to: 97,
-    summary: 'zustand 스토어의 본체예요. 상태 하나와 구독자 Set 하나가 전부예요. 리액트 없이도 돌아가고, 리액트 훅은 이 위에 얹혀요.',
-    notes: [
-      { line: 64, text: '구독자는 Set에 모아요. 같은 함수를 두 번 등록해도 한 번만 들어가요.' },
-      { line: 71, text: 'set(state => ...)처럼 함수를 넘기면 현재 상태로 불러서 다음 상태를 만들어요.' },
-      { line: 73, text: 'Object.is로 같은 값이면 아무것도 안 해요. 같은 값을 다시 넣어도 리렌더가 안 일어나는 이유예요.' },
-      { line: 78, text: '기본은 얕은 병합이에요. 바꾼 키만 넘겨도 나머지는 유지돼요. replace를 주면 통째로 바꿔요.' },
-      { line: 91, text: '구독하면 해지 함수를 돌려줘요. useEffect 정리 함수에 그대로 넣기 좋은 모양이에요.' },
-      { line: 95, text: 'createState에 setState를 넘겨서 초기 상태를 만들어요. 그래서 스토어 안에 액션을 같이 정의할 수 있어요.' },
+    id: 'jotai', name: 'Jotai',
+    blurb: '아톰 단위 상태 관리. atom이 사실 "열쇠"일 뿐이라는 걸 보게 돼요.',
+    items: [
+      {
+        ...JOTAI, id: 'jotai-atom', title: 'atom', path: 'src/vanilla/atom.ts', lang: 'ts', from: 98, to: 121,
+        summary: 'atom(0)은 사실 설정 객체 하나예요. 값은 여기 없고 store에 저장돼요. atom은 열쇠 역할만 해요.',
+        notes: [
+          { line: 102, text: '아톰마다 고유한 키를 붙여요 (atom1, atom2, …)' },
+          { line: 105, text: '디버그 라벨이 있으면 개발 모드에서 키 옆에 붙여요' },
+          { line: 110, text: '함수가 오면 파생 아톰: 읽는 법(read)을 그대로 써요' },
+          { line: 113, text: '값이 오면 기본 아톰: 초기값 + 기본 읽기/쓰기' },
+          { line: 117, text: '쓰기 함수를 따로 주면 그걸로 덮어써요' },
+        ],
+      },
+      {
+        ...JOTAI, id: 'jotai-default-read-write', title: '기본 읽기 · 쓰기', path: 'src/vanilla/atom.ts', lang: 'ts', from: 123, to: 139,
+        summary: 'atom(0)처럼 값만 준 기본 아톰이 읽고 쓰는 방법이에요.',
+        notes: [
+          { line: 124, text: '자기 자신(this)의 값을 store에서 읽어요' },
+          { line: 133, text: 'setCount(c => c + 1)처럼 함수면 지금 값으로 계산해서 저장해요' },
+        ],
+      },
+      {
+        ...JOTAI, id: 'jotai-use-atom', title: 'useAtom', path: 'src/react/useAtom.ts', lang: 'ts', from: 49, to: 58,
+        summary: 'useAtom은 읽기 훅과 쓰기 훅을 합쳐서 [값, setter]로 돌려줄 뿐이에요. useState와 같은 모양이요.',
+        notes: [
+          { line: 54, text: '값 읽기' },
+          { line: 56, text: '값 쓰기 함수' },
+        ],
+      },
+      {
+        ...JOTAI, id: 'jotai-use-set-atom', title: 'useSetAtom', path: 'src/react/useSetAtom.ts', lang: 'ts', from: 26, to: 43,
+        summary: '아톰에 값을 쓰는 함수만 돌려줘요. 값을 안 읽으니 그 아톰이 바뀌어도 리렌더되지 않아요.',
+        notes: [
+          { line: 30, text: 'Provider가 있으면 그 store, 없으면 기본 store' },
+          { line: 31, text: 'useCallback으로 감싸서 setter 참조가 렌더마다 안 바뀌어요' },
+          { line: 33, text: '읽기 전용 아톰에 쓰려고 하면 개발 모드에서 에러' },
+          { line: 38, text: '실제 쓰기는 store.set에 맡겨요' },
+        ],
+      },
     ],
   },
   {
-    id: 'svelte-writable', title: 'Svelte · writable',
-    repo: 'sveltejs/svelte', sha: SVELTE, path: 'packages/svelte/src/store/shared/index.js', lang: 'js', from: 26, to: 95,
-    summary: 'Svelte의 쓰기 가능한 스토어예요. 첫 구독자가 생길 때 start를, 마지막 구독자가 떠날 때 stop을 불러서 필요할 때만 일해요.',
-    notes: [
-      { line: 46, text: 'safe_not_equal로 값이 바뀌었을 때만 알려요. 객체는 내용이 같아도 늘 바뀐 걸로 봐요.' },
-      { line: 50, text: 'subscriber_queue는 모든 스토어가 같이 쓰는 큐예요. 알리는 도중에 또 set이 불려도 순서가 꼬이지 않아요.' },
-      { line: 52, text: '먼저 invalidate를 전부 부르고 그다음 값을 전달해요. 파생 스토어가 어중간한 중간 상태를 보지 않게요.' },
-      { line: 83, text: '첫 구독자가 생기는 순간 start가 실행돼요. 타이머나 소켓을 여기서 열면 돼요.' },
-      { line: 89, text: '마지막 구독자가 떠나면 stop으로 정리해요.' },
+    id: 'redux', name: 'Redux',
+    blurb: '리덕스 핵심 전부. compose → 미들웨어 → subscribe → dispatch → combineReducers.',
+    items: [
+      {
+        ...REDUX, id: 'redux-compose', title: 'compose', path: 'src/compose.ts', lang: 'ts', from: 46, to: 61,
+        summary: '함수 여러 개를 오른쪽부터 차례로 실행하는 함수 하나로 합쳐요. compose(f, g, h)는 (...args) => f(g(h(...args)))예요.',
+        notes: [
+          { line: 49, text: '함수가 없으면 받은 값을 그대로 돌려주는 함수' },
+          { line: 53, text: '하나면 감쌀 필요 없이 그 함수 그대로' },
+          { line: 56, text: '핵심은 reduce 한 줄. 지금까지 합친 a가 b의 결과를 받도록 계속 감싸요' },
+        ],
+      },
+      {
+        ...REDUX, id: 'redux-apply-middleware', title: 'applyMiddleware', path: 'src/applyMiddleware.ts', lang: 'ts', from: 53, to: 77,
+        summary: '미들웨어(로거, thunk 등)를 dispatch 앞에 줄줄이 끼워 넣어요. 리덕스에서 가장 "아하" 하게 되는 부분이에요.',
+        notes: [
+          { line: 56, text: '스토어 만드는 함수를 감싸는 함수를 돌려줘요 (enhancer)' },
+          { line: 58, text: '미들웨어를 조립하는 동안 dispatch를 부르면 에러' },
+          { line: 65, text: '미들웨어들이 받을 API. dispatch는 나중에 완성될 dispatch를 가리켜요' },
+          { line: 69, text: '미들웨어마다 API를 넣어서 next => action => … 모양으로 만들고' },
+          { line: 70, text: 'compose로 엮어서 원래 dispatch를 겹겹이 감싸요' },
+        ],
+      },
+      {
+        ...REDUX, id: 'redux-subscribe', title: 'subscribe', path: REDUX_STORE, lang: 'ts', from: 201, to: 243,
+        skip: [
+          { from: 202, to: 217, text: '함수인지 검사, dispatch 중 구독 금지 (생략)' },
+          { from: 230, to: 235, text: 'dispatch 중 해지 금지 (생략)' },
+        ],
+        summary: '상태가 바뀔 때 불릴 함수를 등록해요. dispatch 도중에 구독·해지해도 안 꼬이게 목록을 복사해서 써요.',
+        notes: [
+          { line: 219, text: '해지했는지 기억해요 (두 번 해지 방지)' },
+          { line: 221, text: '목록을 고치기 전에 복사본을 만들어요' },
+          { line: 222, text: '리스너마다 번호를 붙여 Map에 넣어요' },
+          { line: 240, text: '번호로 지우고' },
+          { line: 241, text: '다음 dispatch 때 새 목록을 쓰게 해요' },
+        ],
+      },
+      {
+        ...REDUX, id: 'redux-dispatch', title: 'dispatch', path: REDUX_STORE, lang: 'ts', from: 270, to: 309,
+        skip: [{ from: 271, to: 295, text: '액션이 평범한 객체인지, type이 문자열인지 검사 (생략)' }],
+        summary: '상태를 바꾸는 유일한 길이에요. 리듀서를 부르고, 모든 구독자에게 알려요.',
+        notes: [
+          { line: 297, text: '리듀서 실행 중이라고 표시하고' },
+          { line: 299, text: '리듀서로 다음 상태를 계산해요' },
+          { line: 304, text: '최신 리스너 목록을 확정하고' },
+          { line: 305, text: '모두 불러요. 무엇이 바뀌었는지는 안 알려줘요' },
+          { line: 308, text: '받은 액션을 그대로 돌려줘요' },
+        ],
+      },
+      {
+        ...REDUX, id: 'redux-combine-reducers', title: 'combineReducers', path: 'src/combineReducers.ts', lang: 'ts', from: 157, to: 200,
+        skip: [
+          { from: 161, to: 175, text: '모양 검사 · 개발 모드 경고 (생략)' },
+          { from: 184, to: 193, text: 'undefined를 돌려주면 에러 (생략)' },
+        ],
+        summary: '리듀서 여러 개에 키별로 일을 나눠 맡겨서 리듀서 하나로 합쳐요. { user, todos }처럼 상태를 나눠 관리하게 해줘요.',
+        notes: [
+          { line: 177, text: '하나라도 바뀌었는지 기록해요' },
+          { line: 183, text: '키마다 맡은 리듀서에 그 키의 상태만 넘겨요' },
+          { line: 195, text: '참조가 달라졌으면 바뀐 것' },
+          { line: 197, text: '키 개수가 달라져도 바뀐 것' },
+          { line: 199, text: '아무것도 안 바뀌었으면 이전 상태 객체 그대로\n→ 불필요한 리렌더를 막아요' },
+        ],
+      },
     ],
   },
   {
-    id: 'classnames', title: 'classnames',
-    repo: 'JedWatson/classnames', sha: CLASSNAMES, path: 'index.js', lang: 'js', from: 1, to: 50,
-    summary: "classNames('btn', { active: isOn })처럼 조건부 클래스 이름을 합쳐줘요. 리액트 초창기부터 쓰인 국민 유틸이에요.",
-    notes: [
-      { line: 1, text: '{}.hasOwnProperty로 메서드를 미리 꺼내 둬요. 객체에 같은 이름의 키가 있어도 안전하게 부르려고요.' },
-      { line: 26, text: '배열이 오면 자기 자신을 다시 불러서 펼쳐요. 중첩 배열도 이렇게 풀려요.' },
-      { line: 29, text: '직접 만든 toString이 있는 객체면 그 결과를 써요. CSS 모듈 같은 특수 객체를 위한 장치예요.' },
-      { line: 36, text: '객체는 값이 참인 키만 클래스로 넣어요. { active: true }가 active가 되는 원리예요.' },
+    id: 'react', name: 'React',
+    blurb: '리액트가 값을 비교하는 법과 외부 스토어를 구독하는 법.',
+    items: [
+      {
+        ...REACT, id: 'react-object-is', title: 'objectIs', path: 'packages/shared/objectIs.js', lang: 'js', from: 14, to: 22,
+        summary: 'React가 state·props를 비교할 때 쓰는 Object.is예요. 없는 브라우저를 위한 대체 구현이 같이 들어 있어요.',
+        notes: [
+          { line: 16, text: '+0과 -0은 1/x의 부호(+∞, -∞)로 구분하고\nNaN은 자기 자신과 다른 유일한 값이라 x !== x로 찾아요' },
+          { line: 22, text: 'Object.is가 있으면 그걸, 없으면 위 함수를 써요' },
+        ],
+      },
+      {
+        ...REACT, id: 'react-shallow-equal', title: 'shallowEqual', path: 'packages/shared/shallowEqual.js', lang: 'js', from: 18, to: 52,
+        summary: '두 객체의 첫 단계 속성만 비교해요. React.memo가 "props가 바뀌었나?"를 판단할 때 쓰는 함수예요.',
+        notes: [
+          { line: 19, text: 'is는 Object.is. NaN끼리는 같고, +0과 -0은 달라요' },
+          { line: 32, text: '키 목록을 뽑아서 개수부터 비교해요' },
+          { line: 43, text: 'objB에 그 키가 정말 있는지 (값이 undefined인 키와 구분)' },
+          { line: 45, text: '값은 한 단계만 비교해요\n→ 렌더마다 새 객체를 넘기면 매번 "바뀌었다"가 돼요' },
+        ],
+      },
+      {
+        ...REACT, id: 'react-use-sync-external-store', title: 'useSyncExternalStore', path: 'packages/use-sync-external-store/src/useSyncExternalStoreShimClient.js', lang: 'js', from: 30, to: 135,
+        skip: [
+          { from: 39, to: 54, text: '오래된 React 18 알파 경고 (생략)' },
+          { from: 61, to: 74, text: 'getSnapshot 캐시 안 됨 경고 (생략)' },
+        ],
+        summary: 'React 18 이전 버전용 대체 구현이에요. zustand 같은 외부 스토어를 리액트에 붙이는 원리가 다 들어 있어요.',
+        notes: [
+          { line: 60, text: '렌더할 때마다 스토어의 지금 값을 읽어요' },
+          { line: 90, text: 'useState를 "강제 리렌더 버튼"으로 써요\n새 객체 {inst}를 넣으면 항상 다른 값이라 다시 그려져요' },
+          { line: 96, text: '화면에 반영된 직후 값과 getSnapshot을 기억해 두고' },
+          { line: 103, text: '그 사이 스토어가 바뀌었으면 다시 그려요' },
+          { line: 116, text: '스토어가 바뀌면 불릴 함수' },
+          { line: 124, text: '값이 진짜 바뀌었을 때만 리렌더' },
+          { line: 130, text: '구독하고, 해지 함수를 정리 함수로 돌려줘요' },
+        ],
+      },
+      {
+        ...REACT, id: 'react-check-snapshot', title: 'checkIfSnapshotChanged', path: 'packages/use-sync-external-store/src/useSyncExternalStoreShimClient.js', lang: 'js', from: 137, to: 149,
+        summary: '스토어 값이 바뀌었는지 확인하는 작은 함수예요. 위 훅이 여러 번 불러요.',
+        notes: [
+          { line: 141, text: '기억해 둔 getSnapshot으로 지금 값을 다시 읽어서' },
+          { line: 145, text: 'Object.is로 이전 값과 비교해요' },
+          { line: 147, text: '읽다가 에러가 나면 일단 바뀐 걸로 쳐서 다시 그려요' },
+        ],
+      },
     ],
   },
   {
-    id: 'clsx', title: 'clsx',
-    repo: 'lukeed/clsx', sha: CLSX, path: 'src/index.js', lang: 'js', from: 1, to: 41,
-    summary: 'classnames와 같은 일을 더 작고 빠르게 해요. shadcn/ui의 cn() 함수 안에도 들어 있어요.',
-    notes: [
-      { line: 2, text: '변수를 맨 위에서 var로 한꺼번에 선언해요. 번들을 바이트 단위로 줄이려는 습관이에요.' },
-      { line: 11, text: 'if 조건 안에서 대입과 검사를 같이 해요. 결과가 빈 문자열이면 건너뛰어요.' },
-      { line: 12, text: "str && (str += ' ')는 '앞에 뭔가 있을 때만 공백 추가'를 한 줄로 쓴 거예요." },
-      { line: 18, text: 'for...in으로 키를 돌면서 값이 참인 것만 붙여요. classnames와 달리 hasOwnProperty 검사를 빼서 더 빨라요.' },
-    ],
-  },
-  {
-    id: 'preact-create-element', title: 'Preact · createElement',
-    repo: 'preactjs/preact', sha: PREACT, path: 'src/create-element.js', lang: 'js', from: 7, to: 33,
-    summary: 'JSX <div id="a">hi</div>는 빌드하면 createElement("div", { id: "a" }, "hi")가 돼요. 그 함수의 실제 구현이에요.',
-    notes: [
-      { line: 22, text: 'props를 돌면서 key와 ref만 따로 빼요. 이 둘은 컴포넌트에 전달되지 않는 특별한 값이에요.' },
-      { line: 24, text: '함수 컴포넌트가 아닐 때만 ref를 빼요. 함수 컴포넌트에는 ref가 일반 props로 넘어가요.' },
-      { line: 29, text: '세 번째 인자부터가 children이에요. 하나면 그대로, 여러 개면 배열로 모아요.' },
-      { line: 32, text: '가상 노드 객체를 만들어 돌려줘요. 실제로 화면에 그리는 건 나중 일이에요.' },
-    ],
-  },
-  {
-    id: 'tanstack-hash-key', title: 'TanStack Query · hashKey',
-    repo: 'TanStack/query', sha: TANSTACK, path: 'packages/query-core/src/utils.ts', lang: 'ts', from: 284, to: 295,
-    summary: "쿼리 키를 문자열로 바꿔서 캐시 이름표로 써요. ['todos', { page: 1 }]이 같은 캐시인지 이걸로 판단해요.",
-    notes: [
-      { line: 285, text: 'JSON.stringify의 두 번째 인자(replacer)로 값을 바꿔치기해요.' },
-      { line: 286, text: '평범한 객체면 키를 정렬한 새 객체로 바꿔요. 그래서 { a, b }와 { b, a }가 같은 키가 돼요.' },
-    ],
-  },
-  {
-    id: 'tanstack-replace-equal-deep', title: 'TanStack Query · replaceEqualDeep',
-    repo: 'TanStack/query', sha: TANSTACK, path: 'packages/query-core/src/utils.ts', lang: 'ts', from: 335, to: 387,
-    summary: '새 데이터에서 이전과 똑같은 부분은 이전 객체를 그대로 재사용해요. 구조적 공유라고 하고, 덕분에 안 바뀐 컴포넌트는 리렌더되지 않아요.',
-    notes: [
-      { line: 342, text: '참조가 같으면 바로 이전 것을 돌려줘요.' },
-      { line: 346, text: '500단계보다 깊으면 비교를 포기해요. 너무 깊은 구조에서 끝없이 파고드는 걸 막는 안전장치예요.' },
-      { line: 365, text: '항목이 같으면 이전 항목을 복사본에 넣고, 같은 항목 수를 세요.' },
-      { line: 381, text: '객체끼리면 재귀로 들어가요. 안쪽만 바뀌어도 바깥은 새 객체, 안 바뀐 형제는 이전 참조 그대로예요.' },
-      { line: 386, text: '전부 같았으면 복사본을 버리고 이전 객체를 통째로 돌려줘요.' },
-    ],
-  },
-  {
-    id: 'vue-cache-string', title: 'Vue · camelize / hyphenate',
-    repo: 'vuejs/core', sha: VUE, path: 'packages/shared/src/general.ts', lang: 'ts', from: 96, to: 120,
-    summary: "Vue 내부에서 'on-click' → 'onClick' 같은 문자열 변환을 자주 해요. 같은 입력은 한 번만 계산하도록 결과를 기억해 둬요(메모이제이션).",
-    notes: [
-      { line: 97, text: 'Object.create(null)은 프로토타입이 없는 빈 객체예요. "toString" 같은 키가 와도 기본 메서드랑 안 부딪혀요.' },
-      { line: 100, text: 'hit || (cache[str] = fn(str)) — 있으면 쓰고, 없으면 계산해서 저장하면서 돌려줘요.' },
-      { line: 110, text: "camelize: '-글자'를 찾아 대문자로 바꿔요. 'font-size' → 'fontSize'" },
-      { line: 119, text: "hyphenate: 단어 경계가 아닌 곳(\\B)의 대문자 앞에 '-'를 넣고 소문자로. 'fontSize' → 'font-size'" },
-    ],
-  },
-  {
-    id: 'express-listen', title: 'Express · app.listen',
-    repo: 'expressjs/express', sha: EXPRESS, path: 'lib/application.js', lang: 'js', from: 598, to: 606,
-    summary: 'app.listen(3000)이 실제로 하는 일이에요. Express 앱은 사실 (req, res)를 받는 함수라서 Node의 http 서버에 그대로 넘길 수 있어요.',
-    notes: [
-      { line: 599, text: 'this(앱 자체)를 요청 처리 함수로 넘겨요. Express 앱이 함수라서 가능해요.' },
-      { line: 602, text: '마지막 인자가 콜백이면 once로 감싸서 딱 한 번만 불리게 해요.' },
-      { line: 603, text: '포트가 이미 쓰이는 중이라 실패해도 같은 콜백으로 에러가 전달돼요.' },
-      { line: 605, text: '나머지 인자는 Node http 서버의 listen에 그대로 넘겨요.' },
-    ],
-  },
-  {
-    id: 'python-bisect-right', title: 'Python · bisect_right',
-    repo: 'python/cpython', sha: CPYTHON, path: 'Lib/bisect.py', lang: 'py', from: 21, to: 54,
-    summary: '정렬된 리스트에 x를 넣을 자리를 이진 탐색으로 찾아요. 파이썬 표준 라이브러리 bisect 모듈의 핵심이에요.',
-    notes: [
-      { line: 34, text: 'lo가 음수면 바로 에러를 내요. 파이썬에서 음수 인덱스는 뒤에서부터 세는 거라 결과가 엉망이 돼요.' },
-      { line: 42, text: '//는 정수 나눗셈이에요. 범위의 가운데를 잡아요.' },
-      { line: 43, text: 'x가 가운데보다 작으면 왼쪽 절반, 아니면 오른쪽 절반으로 줄여요. 같을 때 오른쪽으로 가서 "같은 값들의 오른쪽 끝" 자리가 나와요.' },
-      { line: 47, text: 'key가 있을 때를 반복문째로 따로 썼어요. 반복문 안에서 매번 if를 검사하지 않으려는 최적화예요.' },
-    ],
-  },
-  {
-    id: 'python-heapq-siftdown', title: 'Python · heapq._siftdown',
-    repo: 'python/cpython', sha: CPYTHON, path: 'Lib/heapq.py', lang: 'py', from: 218, to: 233,
-    summary: '힙 끝에 넣은 새 값을 부모와 비교하며 위로 올려서 "부모 ≤ 자식" 규칙을 지켜요. heappush가 이 함수를 불러요. (이름은 down인데 값은 위로 올라가요)',
-    notes: [
-      { line: 226, text: '(pos - 1) >> 1은 (pos - 1) // 2와 같아요. 배열로 만든 힙에서 부모 위치를 구하는 공식이에요.' },
-      { line: 228, text: '새 값이 부모보다 작으면 위로 올라가야 해요.' },
-      { line: 229, text: '매번 맞바꾸지 않고 부모만 한 칸 내려요. 새 값은 마지막에 딱 한 번 넣어서 대입을 줄여요.' },
-      { line: 233, text: '자리를 찾았으면 그때 새 값을 넣어요.' },
-    ],
-  },
-  {
-    id: 'go-insertion-sort', title: 'Go · sort.insertionSort',
-    repo: 'golang/go', sha: GO, path: 'src/sort/zsortinterface.go', lang: 'go', from: 9, to: 16,
-    summary: 'Go의 sort.Sort는 pdqsort를 쓰다가, 구간이 12개 이하로 작아지면 이 삽입 정렬로 바꿔요. 작은 배열에선 단순한 게 제일 빨라요.',
-    notes: [
-      { line: 11, text: 'i번째 값을 앞쪽의 이미 정렬된 구간에 끼워 넣어요.' },
-      { line: 12, text: '앞 값보다 작은 동안 한 칸씩 앞으로 바꿔요. Less와 Swap만 있으면 어떤 자료형이든 정렬돼요.' },
-    ],
-  },
-  {
-    id: 'go-builder-grow', title: 'Go · strings.Builder.Grow',
-    repo: 'golang/go', sha: GO, path: 'src/strings/builder.go', lang: 'go', from: 64, to: 83,
-    summary: 'strings.Builder는 문자열을 이어 붙일 때 매번 새 문자열을 만들지 않고 바이트 버퍼에 쌓아요. 공간이 모자라면 넉넉하게 늘려요.',
-    notes: [
-      { line: 67, text: '새 용량은 지금의 2배 + n이에요. 두 배씩 늘려서 복사 횟수를 줄이는 고전 전략이에요. MakeNoZero는 0으로 채우는 비용까지 아껴요.' },
-      { line: 76, text: 'copyCheck는 Builder가 값으로 복사됐는지 검사해요. 복사본이 같은 버퍼를 건드리면 위험해서 panic을 내요.' },
-      { line: 80, text: '남은 공간(cap - len)이 모자랄 때만 늘려요.' },
-    ],
-  },
-  {
-    id: 'linux-strcmp', title: 'Linux · strcmp',
-    repo: 'torvalds/linux', sha: LINUX, path: 'lib/string.c', lang: 'c', from: 255, to: 273,
-    summary: 'C 표준 함수 strcmp의 리눅스 커널 버전이에요. 한 글자씩 비교해서 앞이 작으면 -1, 크면 1, 같으면 0이에요.',
-    notes: [
-      { line: 262, text: 'unsigned char로 받아요. char가 음수일 수 있는 환경에서도 비교 결과가 똑같게요.' },
-      { line: 265, text: '*cs++는 "지금 글자를 읽고 포인터를 한 칸 옮기기"예요.' },
-      { line: 269, text: "문자열 끝('\\0')에 닿았는데 여기까지 다 같았으면 두 문자열은 같아요." },
-    ],
-  },
-  {
-    id: 'linux-strlen', title: 'Linux · strlen',
-    repo: 'torvalds/linux', sha: LINUX, path: 'lib/string.c', lang: 'c', from: 398, to: 405,
-    summary: "문자열 길이를 구해요. 끝 표시('\\0')가 나올 때까지 포인터를 옮긴 다음 시작 주소를 빼요.",
-    notes: [
-      { line: 402, text: '반복문 몸통이 비어 있어요. 조건 검사와 ++sc만으로 일이 끝나요.' },
-      { line: 403, text: "/* nothing */과 세미콜론 하나로 '일부러 비웠다'는 걸 보여줘요." },
-      { line: 404, text: '포인터끼리 빼면 사이의 칸 수가 나와요. 그게 곧 길이예요.' },
-    ],
-  },
-  {
-    id: 'linux-list-add', title: 'Linux · list_add',
-    repo: 'torvalds/linux', sha: LINUX, path: 'include/linux/list.h', lang: 'c', from: 156, to: 193,
-    summary: '커널 곳곳에서 쓰는 이중 연결 리스트에 항목을 넣어요. 데이터 구조체 안에 list_head를 박아 넣는 방식이라 어떤 구조체든 리스트로 엮을 수 있어요.',
-    notes: [
-      { line: 169, text: '디버그 설정이 켜져 있으면 리스트가 깨졌는지 먼저 검사해요.' },
-      { line: 172, text: 'prev와 next 사이에 new를 끼우려면 포인터 4개를 고쳐야 해요.' },
-      { line: 175, text: 'WRITE_ONCE는 컴파일러가 이 쓰기를 쪼개거나 생략하지 못하게 막아요. 다른 CPU가 락 없이 읽을 수 있는 마지막 연결이라서요.' },
-      { line: 192, text: 'head 바로 뒤에 넣어요. 그래서 스택처럼 쓸 수 있어요. 끝에 넣는 건 list_add_tail이에요.' },
+    id: 'utils', name: '작은 명품 유틸',
+    blurb: 'clsx, nanoid, mitt, SWR — 작지만 어디에나 들어 있는 코드.',
+    items: [
+      {
+        ...CLSX, id: 'clsx', title: 'clsx', path: 'src/index.js', lang: 'js', from: 1, to: 41,
+        summary: "clsx('btn', { active: isOn })처럼 조건부 클래스 이름을 합쳐줘요. shadcn/ui의 cn() 안에도 들어 있어요.",
+        notes: [
+          { line: 2, text: '변수를 맨 위에서 var로 한꺼번에 선언 (번들을 바이트 단위로 줄이는 습관)' },
+          { line: 11, text: 'if 안에서 대입과 검사를 같이 해요. 빈 문자열이면 건너뜀' },
+          { line: 12, text: "'앞에 뭔가 있을 때만 공백 추가'를 한 줄로" },
+          { line: 18, text: '객체는 값이 참인 키만 붙여요 → { active: true }가 active로' },
+          { line: 33, text: '인자마다 toVal로 문자열을 만들어 이어 붙여요' },
+        ],
+      },
+      {
+        ...NANOID, id: 'nanoid', title: 'nanoid', path: 'index.browser.js', lang: 'js', from: 75, to: 84,
+        summary: '짧고 겹치지 않는 ID를 만드는 nanoid의 본체예요. 10줄로 UUID보다 짧고 URL에 안전한 ID를 만들어요.',
+        notes: [
+          { line: 77, text: '브라우저 암호화 API로 진짜 난수 바이트를 받아요\nsize |= 0은 소수점을 버려 정수로 만드는 트릭' },
+          { line: 78, text: 'size를 줄여 가며 뒤에서부터 채워요' },
+          { line: 81, text: '& 63은 0~255를 0~63으로 줄여요\n문자표가 딱 64글자라 어느 글자도 더 자주 나오지 않아요' },
+        ],
+      },
+      {
+        ...MITT, id: 'mitt', title: 'mitt', path: 'src/index.ts', lang: 'ts', from: 46, to: 123,
+        summary: '200바이트짜리 이벤트 버스예요. on / off / emit 세 개가 전부예요.',
+        notes: [
+          { line: 52, text: '이벤트 이름 → 핸들러 배열을 Map으로 관리해요' },
+          { line: 68, text: '이미 배열이 있으면 push, 없으면 새 배열' },
+          { line: 86, text: 'indexOf가 -1이면 >>> 0이 아주 큰 수가 돼서 아무것도 안 지워요\n→ if 없이 "없으면 무시"를 처리하는 트릭' },
+          { line: 88, text: '핸들러를 안 주면 그 이벤트 핸들러를 전부 지워요' },
+          { line: 107, text: 'slice()로 복사한 뒤 돌려요. 핸들러 안에서 off해도 안 꼬여요' },
+          { line: 113, text: "'*' 와일드카드 핸들러는 이벤트 이름도 같이 받아요" },
+        ],
+      },
+      {
+        ...SWR, id: 'swr-stable-hash', title: 'SWR · stableHash', path: 'src/_internal/utils/hash.ts', lang: 'ts', from: 25, to: 76,
+        summary: "useSWR(['/api', { id }]) 같은 키를 캐시 키 문자열로 바꿔요. 객체 키 순서가 달라도 같은 해시가 나와요.",
+        notes: [
+          { line: 34, text: '객체·배열·함수면 (날짜·정규식 제외)' },
+          { line: 37, text: 'WeakMap(table)에 이미 해시가 있으면 바로 돌려줘요' },
+          { line: 43, text: '먼저 임시 번호를 저장해요\n→ 자기 자신을 참조하는 객체도 무한 재귀에 안 빠져요' },
+          { line: 48, text: "배열은 '@' + 각 항목 해시" },
+          { line: 56, text: "객체는 '#' + 정렬한 키:값 해시" },
+          { line: 66, text: '원시값은 문자열로 (문자열은 따옴표 포함)' },
+        ],
+      },
     ],
   },
 ]
 
+export const ALL = LIBRARIES.flatMap((l) => l.items)
+export const libraryOf = (id: string) => LIBRARIES.find((l) => l.items.some((s) => s.id === id))!
+export const findSnippet = (id: string) => ALL.find((s) => s.id === id)
+// 코스 순서대로 다음 (라이브러리 끝이면 다음 라이브러리 첫 함수)
+export const nextSnippet = (id: string) => ALL[(ALL.findIndex((s) => s.id === id) + 1) % ALL.length]
+
 export const rawUrl = (s: Snippet) => `https://raw.githubusercontent.com/${s.repo}/${s.sha}/${s.path}`
 export const blobUrl = (s: Snippet) => `https://github.com/${s.repo}/blob/${s.sha}/${s.path}#L${s.from}-L${s.to}`
-export const findSnippet = (id: string) => SNIPPETS.find((s) => s.id === id)
-export const randomSnippet = (except?: string) => {
-  const pool = SNIPPETS.filter((s) => s.id !== except)
-  return pool[Math.floor(Math.random() * pool.length)]
-}

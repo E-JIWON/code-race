@@ -2,7 +2,7 @@
 
 export type Lang = 'js' | 'ts' | 'py' | 'go' | 'c'
 export type Seg = { text: string; comment: boolean }
-export type Line = { no: number; segs: Seg[] } // no = 원본 파일 줄 번호
+export type Line = { no: number | null; segs: Seg[] } // no = 원본 파일 줄 번호 (끼워 넣은 한글 주석은 null)
 
 // 한 줄을 코드/주석 조각으로 나눔. st.block = 줄을 넘어가는 주석(/* */, 파이썬 docstring) 안인지
 function splitLine(line: string, lang: Lang, st: { block: boolean }): Seg[] {
@@ -62,13 +62,49 @@ function splitLine(line: string, lang: Lang, st: { block: boolean }): Seg[] {
   return segs
 }
 
-// from~to 줄(1부터, 양끝 포함)을 잘라 탭→공백, 공통 들여쓰기 제거 후 조각냄
-export function parseLines(raw: string, from: number, to: number, lang: Lang): Line[] {
-  const texts = raw.split('\n').slice(from - 1, to).map((l) => l.replace(/\t/g, '  ').trimEnd())
-  const indents = texts.filter((t) => t).map((t) => t.length - t.trimStart().length)
-  const cut = indents.length ? Math.min(...indents) : 0
+export type Block = {
+  from: number // 1부터, 양끝 포함
+  to: number
+  lang: Lang
+  notes?: { line: number; text: string }[] // 그 줄 위에 한글 주석으로 끼움 (\n이면 여러 줄)
+  skip?: { from: number; to: number; text: string }[] // 접고 "… text" 한 줄로 대신함
+}
+
+// 원본 주석은 빼고, 한글 해설을 주석으로 끼우고, 공통 들여쓰기 제거
+export function buildLines(raw: string, b: Block): Line[] {
+  const mark = b.lang === 'py' ? '#' : '//'
   const st = { block: false }
-  return texts.map((t, i) => ({ no: from + i, segs: splitLine(t.slice(cut), lang, st) }))
+  const rows: { no: number | null; indent: number; text: string; comment: boolean }[] = []
+
+  raw.split('\n').slice(b.from - 1, b.to).forEach((l, i) => {
+    const no = b.from + i
+    const t = l.replace(/\t/g, '  ').trimEnd()
+    const code = splitLine(t, b.lang, st).filter((s) => !s.comment).map((s) => s.text).join('').trim()
+    const indent = t.length - t.trimStart().length
+    const skip = b.skip?.find((s) => no >= s.from && no <= s.to)
+    if (skip) {
+      if (no === skip.from) rows.push({ no: null, indent, text: `${mark} … ${skip.text}`, comment: true })
+      return
+    }
+    if (!code) {
+      if (!t) rows.push({ no, indent: 0, text: '', comment: false }) // 주석만 있던 줄은 버리고 진짜 빈 줄만 유지
+      return
+    }
+    for (const n of b.notes ?? []) {
+      if (n.line !== no) continue
+      for (const part of n.text.split('\n')) rows.push({ no: null, indent, text: `${mark} ${part}`, comment: true })
+    }
+    rows.push({ no, indent, text: code, comment: false })
+  })
+
+  // 빈 줄 연속·앞뒤·여는 괄호 바로 뒤 빈 줄 정리
+  const kept = rows.filter((r, i) => r.text || (i > 0 && rows[i - 1].text && !rows[i - 1].text.endsWith('{')))
+  while (kept.length && !kept[kept.length - 1].text) kept.pop()
+  const cut = Math.min(...kept.filter((r) => r.text).map((r) => r.indent))
+  return kept.map((r) => ({
+    no: r.no,
+    segs: r.text ? [{ text: ' '.repeat(r.indent - cut) + r.text, comment: r.comment }] : [],
+  }))
 }
 
 // typed = 직접 쳐야 하는 글자. 들여쓰기·주석·빈 줄은 자동으로 건너뜀

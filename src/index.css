@@ -8,8 +8,7 @@
   --accent: #7dd3a8;
   --danger: #ff6b6b;
   --ghost: #b39dff;
-  --comment: #6f8a73;
-  --note: #ffd36b;
+  --comment: #7fa386;
   --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
   color-scheme: dark;
 }
@@ -39,29 +38,31 @@ header {
 
 h1 { font-size: 18px; margin: 0; }
 
-.head-actions { display: flex; gap: 8px; }
-
-select {
-  padding: 7px 10px;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  font: inherit;
-  font-size: 14px;
+.libs { display: flex; gap: 4px; margin-top: 20px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.libs button {
+  padding: 8px 12px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--ink-2);
+  white-space: nowrap;
 }
+.libs button.on { color: var(--ink); border-bottom-color: var(--accent); }
 
-.about { margin: 14px 0 0; color: var(--ink-2); font-size: 14px; }
+.blurb { margin: 12px 0 10px; color: var(--ink-2); font-size: 13px; }
+
+.fns { display: flex; flex-wrap: wrap; gap: 6px; }
+.fns button { padding: 5px 12px; border-radius: 999px; font: 13px var(--mono); gap: 6px; }
+.fns button.on { border-color: var(--accent); color: var(--accent); }
+.fns .idx { color: var(--ink-3); font-size: 11px; }
+.fns .check { color: var(--accent); }
+
+button:disabled { opacity: 0.4; cursor: default; }
+
+.about { margin: 16px 0 0; color: var(--ink); font-size: 14px; }
 .about a { color: var(--ink-2); font: 13px var(--mono); text-decoration: none; }
 .about a:hover { color: var(--ink); }
-
-.tag {
-  margin-left: 6px;
-  padding: 1px 8px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 11px;
-}
 
 .hud {
   display: flex;
@@ -87,7 +88,7 @@ select {
 }
 .code.fade { opacity: 0.7; }
 
-.ln { display: flex; border-left: 2px solid transparent; }
+.ln { display: flex; }
 .ln .no {
   flex: none;
   width: 3.5em;
@@ -97,11 +98,8 @@ select {
   opacity: 0.6;
   user-select: none;
 }
-.ln.noted { border-left-color: var(--note); }
-.ln.noted .no { color: var(--note); opacity: 1; }
-.ln.hl { background: color-mix(in srgb, var(--note) 14%, transparent); }
 
-.cm { color: var(--comment); font-style: italic; }
+.cm { color: var(--comment); font-family: -apple-system, 'Apple SD Gothic Neo', 'Pretendard', sans-serif; font-size: 0.9em; }
 
 .todo { color: var(--ink-3); }
 .done { color: var(--ink); }
@@ -182,25 +180,6 @@ button:hover { border-color: var(--ink-3); }
 h2 { font-size: 15px; margin: 0 0 10px; }
 .small { font-size: 13px; margin: 8px 0 0; }
 
-.notes {
-  margin-top: 12px;
-  padding: 20px 24px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-.notes ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.notes li {
-  display: flex;
-  gap: 12px;
-  padding: 6px 8px;
-  margin: 0 -8px;
-  border-radius: 6px;
-  color: var(--ink);
-  font-size: 14px;
-  cursor: default;
-}
-.notes li:hover { background: color-mix(in srgb, var(--note) 10%, transparent); }
-.lno { flex: none; width: 2.5em; color: var(--note); font: 13px/1.6 var(--mono); text-align: right; }
 
 .room {
   margin-top: 16px;
@@ -226,7 +205,7 @@ h2 { font-size: 15px; margin: 0 0 10px; }
 
 .players { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
 .players li { display: grid; grid-template-columns: 2.5em 10px 8em 1fr 4.5em; align-items: center; gap: 10px; font-size: 14px; }
-.rank { color: var(--note); font-size: 12px; }
+.rank { color: var(--accent); font-size: 12px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; }
 .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
