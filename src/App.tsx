@@ -6,6 +6,8 @@ import { CodeView } from './CodeView'
 import { ResultGraph } from './ResultGraph'
 import { consistency, perSecond, rawCpm, type KeyLog } from './stats'
 import { toPng } from 'html-to-image'
+import { ResultCard } from './card/ResultCard'
+import { loadProfile, recordRound, type Profile } from './card/profile'
 
 type Round = { snippet: Snippet; lines: Line[]; chars: Char[]; pairs: Map<number, number> }
 type Best = { cpm: number; trail: [number, number][] }
@@ -145,6 +147,7 @@ export default function App() {
     })
   }
   const [, rerender] = useReducer((n: number) => n + 1, 0)
+  const [profile, setProfile] = useState<Profile>(loadProfile)
   const [assist, setAssist] = useState(() => store.get<boolean>('assist') ?? true)
 
   const show = (snippet: Snippet, locked = !!roomId) => {
@@ -259,6 +262,8 @@ export default function App() {
   useEffect(() => {
     if (!finished || !s.round) return
     if (!best || liveCpm > best.cpm) store.set(`best:${s.round.snippet.id}`, { cpm: liveCpm, trail: s.trail })
+    // 결과 카드용 누적 기록 (직접 친 글자 + 틀린 글자)
+    setProfile(recordRound(s.round.chars.filter((c) => c.typed).map((c) => c.ch), s.misses))
     rerender() // 함수 칩에 ✓ 바로 표시
   }, [finished]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -415,6 +420,14 @@ export default function App() {
             )}
             {roomId && <div className="actions"><button className="save" onClick={saveImage}>결과 이미지 저장</button></div>}
           </section>
+          <ResultCard
+            player={name}
+            cpm={liveCpm}
+            acc={accuracy}
+            consistency={consistency(graph.raw)}
+            assist={assist}
+            profile={profile}
+          />
         </>
       ) : (
         <p className="dim hint">

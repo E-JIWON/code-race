@@ -3,6 +3,17 @@ import assert from 'node:assert/strict'
 import { buildLines, closerOf, skipAuto, toChars, typedCount, wordAt, type Block } from '../src/engine.ts'
 import { LIBRARIES, rawUrl } from '../src/snippets.ts'
 import { consistency, perSecond, rawCpm } from '../src/stats.ts'
+import { keyMissRate, statsOf, tierOf, topPercent, worstChar } from '../src/card/profile.ts'
+
+// 결과 카드: 등급 경계, 상위 %, 자판 칸별 오타율(기본+Shift 합산), 가장 많이 틀린 글자
+assert.deepEqual([100, 145, 219, 220, 310].map((c) => tierOf(c).id), ['sprout', 'mid', 'mid', 'pro', 'king'])
+assert.equal(topPercent(182), 50)
+assert.ok(topPercent(362) <= 2 && topPercent(100) >= 85)
+const prof = { plays: 4, nightPlays: 1, keyTry: { '0': 6, ')': 5, a: 50, ';': 2 }, keyMiss: { ')': 2, a: 1, ';': 2 } }
+assert.equal(keyMissRate(prof)['0'], 18) // ')'는 Shift+0 → 0번 칸에 합쳐서 2/11
+assert.equal(keyMissRate(prof)[';'], 0) // 5번 미만 친 키는 판단 보류
+assert.deepEqual(worstChar(prof), [')', 40])
+assert.deepEqual(statsOf(prof, { cpm: 200, acc: 96, consistency: 70 }).map((s) => s.value), [50, 80, 70, 0, 16, 25]) // 기호는 7번 중 4번 틀려 43% → 0
 
 // 결과 통계: 2초 동안 1초에 5타씩 → 300타/분, 고르면 일관성 100
 const g = perSecond([[100, 5, 0], [1500, 5, 1]], 2000)
