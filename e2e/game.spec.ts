@@ -325,18 +325,21 @@ test('모바일 375px: 가로 넘침 없음 (코드 상자만 스크롤)', async
   expect(o.bad, JSON.stringify(o)).toEqual([])
 })
 
-test('회귀: 모바일 375px 결과 카드 손가락 지도가 잘리지 않음', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 800 })
-  await open(page, 'redux-compose')
-  await typeCorrect(page)
-  const clipped = await page.evaluate(() => {
-    const t = document.querySelector('.rc-left')!.getBoundingClientRect()
-    return [...document.querySelectorAll('.rc-left .rc-key')]
-      .filter((k) => k.getBoundingClientRect().right > t.right || k.getBoundingClientRect().left < t.left)
-      .map((k) => k.textContent)
+// 375 = 휴대폰, 760 = 두 창이 나란히 좁게 붙는 폭
+for (const width of [375, 760]) {
+  test(`회귀: ${width}px에서 결과 카드 손가락 지도·등급 사다리가 잘리지 않음`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 })
+    await open(page, 'redux-compose')
+    await typeCorrect(page)
+    const clipped = await page.evaluate(() => {
+      const t = document.querySelector('.rc-left')!.getBoundingClientRect()
+      return [...document.querySelectorAll('.rc-left .rc-key, .rc-left .rc-ladder li')]
+        .filter((k) => k.getBoundingClientRect().right > t.right + 0.5 || k.getBoundingClientRect().left < t.left - 0.5)
+        .map((k) => k.textContent)
+    })
+    expect(clipped).toEqual([])
   })
-  expect(clipped).toEqual([])
-})
+}
 
 test('회귀: 불러오기 실패 → 다시 시도가 실패한 함수를 다시 불러옴', async ({ page }) => {
   await open(page, 'redux-compose')

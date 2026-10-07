@@ -152,7 +152,7 @@ export function ResultCard({ player, cpm, acc, consistency, assist, profile }: P
             <ol className="rc-ladder">
               {TIERS.map((t, i) => (
                 <li key={t.id} className={i < at ? 'past' : i === at ? 'now' : ''}>
-                  {t.name.replace(' 개발자', '')}
+                  {t.short}
                 </li>
               ))}
             </ol>

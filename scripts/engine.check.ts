@@ -15,9 +15,12 @@ import { keyMissRate, statsOf, tierOf, topPercent, worstChar } from '../src/feat
 
 // 결과 카드: 등급 경계, 상위 %, 자판 칸별 오타율(기본+Shift 합산), 가장 많이 틀린 글자
 assert.deepEqual(
-  [100, 145, 219, 220, 310].map((c) => tierOf(c).id),
-  ['sprout', 'mid', 'mid', 'pro', 'king'],
+  [0, 109, 110, 165, 210, 255, 299, 300, 345].map((c) => tierOf(c).id),
+  ['baby', 'baby', 'newbie', 'mid', 'pro', 'master', 'master', 'legend', 'king'],
 )
+// 경계가 의도한 분포 지점에 있는지 (상위 1%·5%)
+assert.equal(topPercent(345), 1)
+assert.equal(topPercent(300), 5)
 assert.equal(topPercent(182), 50)
 assert.ok(topPercent(362) <= 2 && topPercent(100) >= 85)
 const prof = { plays: 4, nightPlays: 1, keyTry: { '0': 6, ')': 5, a: 50, ';': 2 }, keyMiss: { ')': 2, a: 1, ';': 2 } }

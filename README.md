@@ -10,7 +10,7 @@ zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치
 ![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6%20strict-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
-![Playwright](https://img.shields.io/badge/E2E-Playwright%2022%EA%B0%9C-2ead33?logo=playwright&logoColor=white)
+![Playwright](https://img.shields.io/badge/E2E-Playwright%2023%EA%B0%9C-2ead33?logo=playwright&logoColor=white)
 ![Backend](<https://img.shields.io/badge/%EB%B0%B1%EC%97%94%EB%93%9C-%EC%97%86%EC%9D%8C%20(P2P)-black>)
 
 <img src="docs/demo-typing.gif" alt="zustand useShallow를 치는 모습 — 오타, 자동완성 제안, 한글 해설 주석" width="720" />
@@ -36,7 +36,7 @@ zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치
 
 <p align="center"><img src="docs/demo-result.gif" alt="결과 그래프와 캐릭터 카드" width="720" /></p>
 
-- **왼쪽 · 내 타자 실력**: 이번 판 타수(블록 숫자), 등급 사다리 `초급 ▸ 중급 ▸ 고수 ▸ 킹갓제너럴`, 지금까지 자주 틀린 키가 빨갛게 달아오르는 손가락 지도
+- **왼쪽 · 내 타자 실력**: 이번 판 타수(블록 숫자), 등급 사다리 `응애 ▸ 뉴비 ▸ 중수 ▸ 고수 ▸ 초고수 ▸ 전설 ▸ 킹갓제너럴` (7단계), 지금까지 자주 틀린 키가 빨갛게 달아오르는 손가락 지도
 - **오른쪽 · 내 능력치**: 속도·정확·리듬·기호·끈기·야행성 육각형, 가장 높은 능력치로 고른 한마디, 패시브(자동완성) · 디버프(가장 많이 틀린 글자)
 
 ## 친구랑 대결
@@ -69,7 +69,7 @@ pnpm dev            # http://localhost:5173
 | 명령                           | 하는 일                                                                                                   |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `pnpm build`                   | 타입 검사(`tsc -b`) + 프로덕션 빌드                                                                       |
-| `pnpm test:e2e`                | Playwright E2E 22개 (시스템 Chrome 사용)                                                                  |
+| `pnpm test:e2e`                | Playwright E2E 23개 (시스템 Chrome 사용)                                                                  |
 | `node scripts/engine.check.ts` | 코드 파싱·자동완성·통계·등급 계산 단위 검사 (`--net`을 붙이면 29개 함수를 원본에서 받아 해설 줄까지 검증) |
 | `pnpm lint` / `pnpm format`    | oxlint / prettier                                                                                         |
 | `pnpm demo:gif`                | README의 GIF를 실제 플레이로 다시 찍기                                                                    |
@@ -85,7 +85,7 @@ src/
 │  ├─ race/                 P2P 방 · 카운트다운 · 진행 공유 · 대결 패널
 │  └─ result/               결과 그래프 · 통계 · 누적 기록 · 캐릭터 카드
 └─ shared/                  localStorage · fetch 캐시 · PNG 저장
-e2e/                        Playwright (게임 19개 + 대결 3개)
+e2e/                        Playwright (게임 20개 + 대결 3개)
 scripts/                    단위 검사 · 데모 GIF 생성
 ```
 

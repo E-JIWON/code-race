@@ -2,14 +2,18 @@
 
 const MIN_TRIES = 5 // 이보다 적게 친 글자는 오타율 판단 보류
 
-export type TierId = 'sprout' | 'mid' | 'pro' | 'king'
-export type Tier = { id: TierId; name: string; min: number; color: string }
+export type TierId = 'baby' | 'newbie' | 'mid' | 'pro' | 'master' | 'legend' | 'king'
+export type Tier = { id: TierId; name: string; short: string; min: number; color: string }
 
+// 경계 = 아래 분포 가정에서 하위 15·40·65·85%, 상위 5·1% 지점 (위로 갈수록 좁아짐)
 export const TIERS: Tier[] = [
-  { id: 'sprout', name: '초급 개발자', min: 0, color: '#8de08a' },
-  { id: 'mid', name: '중급 개발자', min: 145, color: '#8cc3ff' },
-  { id: 'pro', name: '고수 개발자', min: 220, color: '#ffd36b' },
-  { id: 'king', name: '킹갓제너럴 개발자', min: 310, color: '#c49bff' },
+  { id: 'baby', name: '응애 개발자', short: '응애', min: 0, color: '#ffb3d1' },
+  { id: 'newbie', name: '뉴비 개발자', short: '뉴비', min: 110, color: '#8de08a' },
+  { id: 'mid', name: '중수 개발자', short: '중수', min: 165, color: '#7cc4ff' },
+  { id: 'pro', name: '고수 개발자', short: '고수', min: 210, color: '#ffd36b' },
+  { id: 'master', name: '초고수 개발자', short: '초고수', min: 255, color: '#ffa45c' },
+  { id: 'legend', name: '전설의 개발자', short: '전설', min: 300, color: '#ff7b9c' },
+  { id: 'king', name: '킹갓제너럴 개발자', short: '킹갓제너럴', min: 345, color: '#c49bff' },
 ]
 export const tierOf = (cpm: number) => [...TIERS].reverse().find((t) => cpm >= t.min)!
 
