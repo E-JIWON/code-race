@@ -1,7 +1,7 @@
 // 카드 시안: 개발자 유형(채택 후보) + 개발자만 알아보는 형식 4종
 import { useRef, type ReactNode } from 'react'
 import { toPng } from 'html-to-image'
-import { AXES, DAILY, KEY_MISS, PROFILE, SAMPLE, STATS, TYPE_SUB, TYPE_TITLE, type Tier, type TierId } from './tiers'
+import { AXES, KEY_MISS, PROFILE, SAMPLE, STATS, TIERS, TYPE_SUB, TYPE_TITLE, type Tier } from './tiers'
 import { useTilt } from './useTilt'
 
 // 카드 하나 + 이미지 저장 버튼 (다섯 시안이 같이 씀)
@@ -85,6 +85,15 @@ export function KeyMap({ tier }: { tier: Tier }) {
           <p className="km-kicker">{SAMPLE.player}의 손가락 지도</p>
           <p className="km-title">닫는 괄호에서 가장 많이 미끄러져요</p>
         </header>
+        <div className={`ladder lt-${tier.id}`}>
+          <p className="ladder-head"><b>{tier.name}</b><span>{tier.cpm}타/분 · {tier.rank}</span></p>
+          <ol>
+            {TIERS.map((t, i) => {
+              const at = TIERS.indexOf(tier)
+              return <li key={t.id} className={i < at ? 'past' : i === at ? 'now' : ''}>{t.name.replace(' 개발자', '')}</li>
+            })}
+          </ol>
+        </div>
         <div className="km-board">
           {KEY_ROWS.map((row, r) => (
             <div key={r} className="km-row" style={{ paddingLeft: `${r * 14}px` }}>
@@ -101,47 +110,57 @@ export function KeyMap({ tier }: { tier: Tier }) {
           ))}
         </div>
         <footer>
+          <span className="km-label">가장 많이 틀린 키</span>
           {worst.map(([k, v]) => <span key={k}><code>{k}</code> {v}%</span>)}
-          <span className="km-tier">{tier.name} · {tier.cpm}타</span>
         </footer>
       </div>
     </Shareable>
   )
 }
 
-// ───── 3. neofetch 터미널 ─────
-const LOGO = [
-  '  ____ ____',
-  ' / ___|  _ \\',
-  '| |   | |_) |',
-  '| |___|  _ <',
-  ' \\____|_| \\_\\',
-].join('\n')
+// ───── 3. 터미널 명함 (neofetch식) ─────
+// 5줄짜리 블록 숫자 — 내 타수를 터미널 그림처럼 크게
+const DIGITS: Record<string, string[]> = {
+  '0': ['███', '█ █', '█ █', '█ █', '███'],
+  '1': [' █ ', '██ ', ' █ ', ' █ ', '███'],
+  '2': ['███', '  █', '███', '█  ', '███'],
+  '3': ['███', '  █', '███', '  █', '███'],
+  '4': ['█ █', '█ █', '███', '  █', '  █'],
+  '5': ['███', '█  ', '███', '  █', '███'],
+  '6': ['███', '█  ', '███', '█ █', '███'],
+  '7': ['███', '  █', '  █', '  █', '  █'],
+  '8': ['███', '█ █', '███', '█ █', '███'],
+  '9': ['███', '█ █', '███', '  █', '███'],
+}
+const bigNumber = (n: number) =>
+  [0, 1, 2, 3, 4].map((r) => [...String(n)].map((d) => DIGITS[d][r]).join(' ')).join('\n')
 
 export function Neofetch({ tier }: { tier: Tier }) {
   const rows: [string, string][] = [
-    ['등급', tier.name],
-    ['타수', `${tier.cpm}타/분 (${tier.rank})`],
     ['정확도', `${tier.acc}%`],
     ['일관성', `${PROFILE.consistency}%`],
     ['플레이', `${PROFILE.plays}판 · ${PROFILE.minutes}분`],
     ['주력', PROFILE.libs[0].name],
-    ['약점', `${PROFILE.weakKey}  (닫는 괄호)`],
+    ['약점', `${PROFILE.weakKey}  닫는 괄호`],
     ['자동완성', PROFILE.assist ? '켬' : '끔'],
   ]
+  const ladder = TIERS.map((t) => (t.id === tier.id ? `[${t.name.replace(' 개발자', '')}]` : t.name.replace(' 개발자', ''))).join(' ▸ ')
   return (
-    <Shareable name="neofetch" hint="개발자들이 내 컴퓨터 자랑할 때 쓰는 그 화면">
+    <Shareable name="terminal" hint="터미널에 내 타자 실력을 출력한 화면이에요">
       <div className={`term tt-${tier.id}`}>
-        <div className="term-bar"><i /><i /><i /><span>{SAMPLE.player}@code-race: ~</span></div>
+        <div className="term-bar"><i /><i /><i /><span>내 타자 실력 — 코드 타자 레이스</span></div>
         <div className="term-body">
-          <p className="term-cmd"><b>{SAMPLE.player}@code-race</b> ~ % neofetch</p>
+          <p className="term-cmd"><b>{SAMPLE.player}@code-race</b> ~ % 내-실력 --보여줘</p>
           <div className="term-grid">
-            <pre className="term-logo">{LOGO}</pre>
+            <div className="term-left">
+              <pre className="term-logo">{bigNumber(tier.cpm)}</pre>
+              <p className="term-unit">타/분 · {tier.rank}</p>
+            </div>
             <div className="term-info">
-              <p className="term-host"><b>{SAMPLE.player}</b>@<b>code-race</b></p>
-              <p className="term-rule">{'-'.repeat(18)}</p>
+              <p className="term-grade">{tier.name}</p>
+              <p className="term-ladder">{ladder}</p>
+              <p className="term-rule">{'-'.repeat(22)}</p>
               {rows.map(([k, v]) => <p key={k}><b>{k}</b>: {v}</p>)}
-              <p className="term-colors">{['#ff6b6b', '#ffd36b', '#7dd3a8', '#6bc7ff', '#c49bff', '#ff8cc6', '#e6e8ee'].map((c) => <i key={c} style={{ background: c }} />)}</p>
             </div>
           </div>
           <p className="term-cmd"><b>{SAMPLE.player}@code-race</b> ~ % <span className="term-caret" /></p>
@@ -196,42 +215,6 @@ export function RpgStats({ tier }: { tier: Tier }) {
           <li><b>패시브</b> 자동완성 — Tab 한 번에 단어가 완성됨</li>
           <li><b>디버프</b> 괄호 미아 — `)` 앞에서 9% 확률로 미끄러짐</li>
         </ul>
-      </div>
-    </Shareable>
-  )
-}
-
-// ───── 5. 타자 잔디 ─────
-const GRASS: Record<TierId, string[]> = {
-  sprout: ['#1b2a1e', '#2d5a33', '#3f8a46', '#5fb862', '#8de08a'],
-  mid: ['#1a2230', '#1f4f8a', '#2b72c2', '#4f9bf0', '#8cc3ff'],
-  pro: ['#2a2312', '#6b4c12', '#a8761c', '#e0a630', '#ffd36b'],
-  king: ['#1e1833', '#4b2e8a', '#7048e8', '#a07dff', '#e2b6ff'],
-}
-
-export function Grass({ tier }: { tier: Tier }) {
-  const level = (n: number) => (n === 0 ? 0 : n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : 4)
-  let streak = 0
-  let best = 0
-  for (const n of DAILY) {
-    streak = n ? streak + 1 : 0
-    best = Math.max(best, streak)
-  }
-  const total = DAILY.reduce((a, b) => a + b, 0)
-  return (
-    <Shareable name="grass" hint="깃허브 잔디처럼 하루하루 친 판 수">
-      <div className="grass">
-        <header>
-          <p className="gr-title"><b>{total}판</b> 최근 20주 동안</p>
-          <p className="gr-tier">{tier.name}</p>
-        </header>
-        <div className="gr-grid">
-          {DAILY.map((n, i) => <i key={i} style={{ background: GRASS[tier.id][level(n)] }} title={`${n}판`} />)}
-        </div>
-        <footer>
-          <span>연속 <b>{streak}일</b> · 최장 <b>{best}일</b></span>
-          <span className="gr-legend">적음 {GRASS[tier.id].map((c) => <i key={c} style={{ background: c }} />)} 많음</span>
-        </footer>
       </div>
     </Shareable>
   )

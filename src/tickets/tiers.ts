@@ -43,14 +43,6 @@ export const KEY_MISS: Record<string, number> = {
   z: 3, x: 2, c: 0, v: 1, b: 2, n: 0, m: 1,
 }
 
-// 최근 20주 하루 판 수 — 타자 잔디용 (샘플: 주말·최근에 더 많이)
-export const DAILY = Array.from({ length: 140 }, (_, i) => {
-  const noise = (Math.sin(i * 12.9898) * 43758.5453) % 1 // 고정된 가짜 난수 (-1~1)
-  const busy = (i > 100 ? 0.35 : 0) + (i % 7 >= 5 ? 0.2 : 0)
-  const v = Math.abs(noise) * 0.8 + busy
-  return v < 0.4 ? 0 : Math.round((v - 0.3) * 8)
-})
-
 // RPG 능력치 (0~100)
 export const STATS = [
   { key: '속도', value: 78 },

@@ -77,7 +77,21 @@
 .km-key small { position: absolute; top: 2px; left: 4px; font-size: 9px; opacity: 0.75; }
 .keymap footer { display: flex; align-items: center; gap: 14px; margin-top: 14px; color: var(--ink-2); font-size: 13px; }
 .keymap footer code { padding: 1px 7px; border-radius: 5px; background: rgba(255, 77, 77, 0.2); color: #fff; font-family: var(--mono); }
-.km-tier { margin-left: auto; color: var(--ink-3); font-size: 12px; }
+.km-label { color: var(--ink-3); font-size: 12px; }
+
+/* 등급 사다리 — 지금 어느 칸인지 */
+.ladder { margin-top: 16px; }
+.lt-sprout { --lc: #8de08a; }
+.lt-mid { --lc: #8cc3ff; }
+.lt-pro { --lc: #ffd36b; }
+.lt-king { --lc: #c49bff; }
+.ladder-head { display: flex; align-items: baseline; gap: 10px; }
+.ladder-head b { color: var(--lc); font-size: 26px; font-weight: 900; letter-spacing: -0.02em; }
+.ladder-head span { color: var(--ink-2); font: 600 13px var(--mono); }
+.ladder ol { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 10px 0 0; padding: 0; list-style: none; }
+.ladder li { padding: 6px 0 0; border-top: 4px solid #2a303b; color: var(--ink-3); font-size: 12px; text-align: center; }
+.ladder li.past { border-top-color: color-mix(in srgb, var(--lc) 45%, transparent); color: var(--ink-2); }
+.ladder li.now { border-top-color: var(--lc); color: var(--lc); font-weight: 800; }
 
 /* ───────── 3. neofetch 터미널 ───────── */
 .term {
@@ -102,12 +116,13 @@
 .term p { margin: 0; }
 .term-cmd b { color: var(--tc); font-weight: 600; }
 .term-grid { display: flex; gap: 26px; margin: 12px 0 14px; }
-.term-logo { margin: 0; color: var(--tc); font: 700 15px/1.25 var(--mono); }
+.term-left { flex: none; }
+.term-logo { margin: 0; color: var(--tc); font: 700 13px/1.05 var(--mono); letter-spacing: -0.5px; }
+.term-unit { margin-top: 8px !important; color: #8b949e; font-size: 12px; }
+.term-grade { color: var(--tc); font-size: 22px; font-weight: 900; line-height: 1.2; }
+.term-ladder { margin-top: 4px !important; color: #8b949e; font-size: 12px; }
 .term-info b { color: var(--tc); }
-.term-host b { font-weight: 700; }
 .term-rule { color: #484f58; }
-.term-colors { display: flex; margin-top: 10px !important; }
-.term-colors i { width: 22px; height: 14px; }
 .term-caret { display: inline-block; width: 8px; height: 15px; vertical-align: -2px; background: #c9d1d9; animation: caret 1s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
 
@@ -146,26 +161,6 @@
 .rpg-skills li { padding: 7px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); }
 .rpg-skills b { margin-right: 6px; color: var(--rpg-rim); }
 
-/* ───────── 5. 타자 잔디 ───────── */
-.grass {
-  width: 560px;
-  padding: 20px 22px 16px;
-  border-radius: 14px;
-  background: #0d1117;
-  color: #e6edf3;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px #30363d;
-}
-.grass p { margin: 0; }
-.grass header { display: flex; align-items: baseline; justify-content: space-between; }
-.gr-title { font-size: 14px; color: #8b949e; }
-.gr-title b { margin-right: 6px; color: #e6edf3; font-size: 22px; }
-.gr-tier { color: #8b949e; font-size: 12px; }
-.gr-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 4px; margin-top: 16px; }
-.gr-grid i { aspect-ratio: 1; border-radius: 3px; outline: 1px solid rgba(255, 255, 255, 0.04); outline-offset: -1px; }
-.grass footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; color: #8b949e; font-size: 12px; }
-.grass footer b { color: #e6edf3; }
-.gr-legend { display: flex; align-items: center; gap: 3px; }
-.gr-legend i { width: 11px; height: 11px; border-radius: 2px; }
 
 .barcode {
   height: 38px;
