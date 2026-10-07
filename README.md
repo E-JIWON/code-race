@@ -7,7 +7,7 @@
 zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치면, 한글 해설과 「그래서 개발할 땐」 실무 팁이 따라와요.<br />
 친구에게 초대 링크를 보내면 바로 실시간 대결이 돼요. 회사·학교 망에서도요.
 
-### [▶ 바로 해보기 — code-race.bonchil-jinsang.workers.dev](https://code-race.bonchil-jinsang.workers.dev/)
+### [▶ 바로 해보기 — code-race.jinsang-defense.workers.dev](https://code-race.jinsang-defense.workers.dev/)
 
 [![CI](https://github.com/E-JIWON/code-race/actions/workflows/ci.yml/badge.svg)](https://github.com/E-JIWON/code-race/actions/workflows/ci.yml)
 [![Deploy](https://github.com/E-JIWON/code-race/actions/workflows/deploy.yml/badge.svg)](https://github.com/E-JIWON/code-race/actions/workflows/deploy.yml)
