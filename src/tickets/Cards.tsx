@@ -1,7 +1,7 @@
 // 카드 시안: 개발자 유형(채택 후보) + 개발자만 알아보는 형식 4종
 import { useRef, type ReactNode } from 'react'
 import { toPng } from 'html-to-image'
-import { AXES, KEY_MISS, PROFILE, SAMPLE, STATS, TIER_MIN, TIERS, TYPE_SUB, TYPE_TITLE, type Tier } from './tiers'
+import { AXES, KEY_MISS, PROFILE, SAMPLE, STAT_LINE, STATS, TIER_MIN, TIERS, TYPE_SUB, TYPE_TITLE, type Tier } from './tiers'
 import { useTilt } from './useTilt'
 
 // 카드 하나 + 이미지 저장 버튼 (다섯 시안이 같이 씀)
@@ -560,6 +560,8 @@ export function EditorCard({ tier }: { tier: Tier }) {
 // ───── 8. 개발자 캐릭터 시트 — 터미널 틀 + 큰 타수 + 사다리 / 키보드 지도 + 육각형 / 스킬 ─────
 export function CharacterSheet({ tier, vertical = false }: { tier: Tier; vertical?: boolean }) {
   const worst = Object.entries(KEY_MISS).sort((a, b) => b[1] - a[1])[0]
+  const top = STATS.reduce((a, b) => (b.value > a.value ? b : a))
+  const [trait, desc] = STAT_LINE[top.key]
   return (
     <Shareable
       name={vertical ? 'sheet-vertical' : 'sheet'}
@@ -590,7 +592,18 @@ export function CharacterSheet({ tier, vertical = false }: { tier: Tier; vertica
             </div>
             <div>
               <p className="sheet-label"># 능력치</p>
-              <Radar className="rpg-radar sheet-radar" />
+              <div className="sheet-stats">
+                <Radar className="rpg-radar sheet-radar" />
+                <div className="sheet-verdict">
+                  <p>당신은</p>
+                  <p className="sheet-trait">{trait}</p>
+                  <p>타입이군요!</p>
+                  <p className="sheet-desc">{desc}</p>
+                  <p className="sheet-top">
+                    {top.key} <b>{top.value}</b>
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
           <p className="sheet-skill">

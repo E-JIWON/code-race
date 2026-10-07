@@ -307,3 +307,16 @@
 .sheet.vertical .km-key small { display: none; }
 .sheet.vertical .sheet-radar { width: 230px; }
 .sheet.vertical .sheet-skill { font-size: 12px; }
+
+/* 능력치: 육각형 왼쪽 + 한마디 오른쪽 */
+.sheet-stats { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px; }
+.sheet-verdict { font-size: 13px; color: #c9d1d9; }
+.sheet-verdict p { margin: 0; line-height: 1.45; }
+.sheet-trait { margin: 2px 0 !important; color: var(--tc); font-size: 20px; font-weight: 900; line-height: 1.25 !important; word-break: keep-all; }
+.sheet-desc { margin-top: 10px !important; color: #8b949e; font-size: 12px; word-break: keep-all; }
+.sheet-top { margin-top: 10px !important; color: #6e7681; font-size: 12px; }
+.sheet-top b { color: var(--tc); }
+/* 가로형은 오른쪽 칸이 좁아서 육각형을 조금 줄여 나란히 */
+.sheet:not(.vertical) .sheet-radar { width: 165px; margin: 0; }
+.sheet:not(.vertical) .sheet-trait { font-size: 17px; }
+.sheet.vertical .sheet-radar { width: 190px; margin: 0; }
