@@ -1,4 +1,5 @@
 // 링크 미리보기(OG) 이미지 만들기: pnpm og → public/og.png, public/og-invite.png (1200×630)
+// + docs/social-preview.png (1280×640, GitHub 레포 미리보기·포트폴리오 카드)
 import { chromium } from '@playwright/test'
 
 const CODE = [
@@ -17,7 +18,7 @@ const CODE = [
 
 const page = (invite: boolean) => `<!doctype html><meta charset="utf-8"><style>
 * { box-sizing: border-box; margin: 0 }
-body { width: 1200px; height: 630px; background: radial-gradient(circle at 85% 15%, #1d2a24, #0f1115 55%); color: #e6e8ee;
+body { width: 100vw; height: 100vh; background: radial-gradient(circle at 85% 15%, #1d2a24, #0f1115 55%); color: #e6e8ee;
   font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif; padding: 64px 72px; display: flex; flex-direction: column }
 .kicker { color: #7dd3a8; font-size: 26px; font-weight: 700; letter-spacing: .04em }
 h1 { font-size: 66px; font-weight: 900; letter-spacing: -.03em; margin-top: 10px }
@@ -46,11 +47,13 @@ ${
 <div class="foot"><div class="chips"><span>zustand</span><span>TanStack Query</span><span>Redux</span><span>React</span></div><span>code-race.bonchil.workers.dev</span></div>`
 
 const browser = await chromium.launch({ channel: 'chrome' })
-const tab = await browser.newPage({ viewport: { width: 1200, height: 630 } })
-for (const [file, invite] of [
-  ['public/og.png', false],
-  ['public/og-invite.png', true],
+const tab = await browser.newPage()
+for (const [file, invite, width, height] of [
+  ['public/og.png', false, 1200, 630],
+  ['public/og-invite.png', true, 1200, 630],
+  ['docs/social-preview.png', false, 1280, 640],
 ] as const) {
+  await tab.setViewportSize({ width, height })
   await tab.setContent(page(invite))
   await tab.screenshot({ path: file })
   console.log(file)
