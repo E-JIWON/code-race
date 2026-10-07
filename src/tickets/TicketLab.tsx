@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { KeyMap, Neofetch, RpgStats, TypeCard } from './Cards'
+import { EditorCard, KeyMap, Neofetch, PromotionPR, ReadmeBadges, RpgStats, TypeCard } from './Cards'
 import { TIERS } from './tiers'
 import './tickets.css'
 
@@ -12,6 +12,9 @@ const VARIANTS = [
   { id: 'keymap', name: '키보드 지도', View: KeyMap },
   { id: 'terminal', name: '터미널 명함', View: Neofetch },
   { id: 'rpg', name: 'RPG 능력치', View: RpgStats },
+  { id: 'pr', name: '승급 PR', View: PromotionPR },
+  { id: 'badges', name: 'README 배지', View: ReadmeBadges },
+  { id: 'editor', name: 'VS Code 명함', View: EditorCard },
 ]
 
 // 카드 시안 랩 — ?lab 으로 열림 (?lab=receipt 처럼 탭 바로 열기)

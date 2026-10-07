@@ -167,3 +167,99 @@
   background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px, var(--ink) 8px 11px, transparent 11px 13px);
   opacity: 0.85;
 }
+
+/* ───────── 5. 승급 PR ───────── */
+.pr {
+  width: 560px;
+  padding: 22px 24px;
+  border-radius: 12px;
+  background: #0d1117;
+  color: #e6edf3;
+  font-size: 14px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px #30363d;
+}
+.pr p { margin: 0; }
+.pr code { padding: 1px 6px; border-radius: 6px; background: rgba(110, 118, 129, 0.25); font: 12px var(--mono); }
+.pr-title { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+.pr-title b { color: #c49bff; }
+.pr-title span { color: #8b949e; font-weight: 300; }
+.pr-meta { display: flex; align-items: center; gap: 8px; margin-top: 10px !important; color: #8b949e; }
+.pr-meta b { color: #e6edf3; }
+.pr-state { padding: 4px 12px; border-radius: 999px; background: #8957e5; color: #fff; font-size: 13px; font-weight: 600; }
+.pr-labels { display: flex; gap: 6px; margin-top: 14px; }
+.pr-labels span { padding: 2px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 18%, transparent); color: color-mix(in srgb, var(--c) 40%, #fff); font-size: 12px; font-weight: 600; }
+.pr-box { margin-top: 14px; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+.pr-box p { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+.pr-box p + p { border-top: 1px solid #21262d; }
+.pr-box-head { background: #161b22; font-weight: 600; }
+.pr-check { color: #c9d1d9; font-size: 13px; }
+.pr-box i { flex: none; width: 16px; height: 16px; border-radius: 50%; }
+.pr-box i.ok { background: #238636 radial-gradient(circle, #fff 0 2.5px, transparent 3px); }
+.pr-box i.warn { background: #9e6a03 radial-gradient(circle, #fff 0 2.5px, transparent 3px); }
+.pr-review b { color: #e6edf3; }
+.pr-ladder { gap: 4px !important; }
+.pr-ladder span { flex: 1; padding-top: 6px; border-top: 4px solid #30363d; color: #6e7681; font-size: 12px; text-align: center; }
+.pr-ladder span.past { border-top-color: #6e40c9; color: #8b949e; }
+.pr-ladder span.now { border-top-color: #a371f7; color: #d2a8ff; font-weight: 800; }
+
+/* ───────── 6. README 배지 ───────── */
+.readme {
+  width: 560px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #0d1117;
+  color: #e6edf3;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px #30363d;
+}
+.readme p { margin: 0; }
+.readme-path { padding: 12px 18px; background: #161b22; border-bottom: 1px solid #30363d; color: #8b949e; font-size: 13px; }
+.readme-path b { color: #e6edf3; }
+.readme-body { padding: 22px 24px 26px; }
+.readme-h1 { padding-bottom: 8px; border-bottom: 1px solid #21262d; font-size: 26px; font-weight: 700; }
+.readme-p { margin-top: 12px !important; color: #c9d1d9; font-size: 14px; }
+.shields { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.shield { display: inline-flex; height: 22px; overflow: hidden; border-radius: 4px; font: 600 12px/22px Verdana, -apple-system, sans-serif; color: #fff; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3); }
+.shield span { padding: 0 8px; }
+.shield span:first-child { background: #555; }
+
+/* ───────── 7. VS Code 명함 ───────── */
+.editor {
+  width: 580px;
+  overflow: visible;
+  border-radius: 10px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font: 14px/1.75 var(--mono);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px #333;
+}
+.ed-tabs { display: flex; border-radius: 10px 10px 0 0; background: #252526; font-size: 12px; }
+.ed-tabs span { padding: 9px 16px; color: #8b8b8b; }
+.ed-tabs span.on { border-top: 2px solid var(--tc); background: #1e1e1e; color: #fff; }
+.ed-code { padding: 12px 0 14px; }
+.ed-code p { position: relative; display: flex; margin: 0; }
+.ed-no { width: 44px; padding-right: 16px; color: #6e7681; text-align: right; }
+.ed-tx { white-space: pre; }
+.hover-line { background: rgba(255, 255, 255, 0.04); }
+.hover-line .tk-prop { text-decoration: underline dotted; text-underline-offset: 4px; }
+.ed-tip {
+  display: inline-block;
+  margin: 2px 0 4px 64px;
+  padding: 6px 10px;
+  border: 1px solid #454545;
+  border-radius: 4px;
+  background: #252526;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ed-tip .tip-now .tk-str { padding: 1px 3px; border-radius: 3px; background: color-mix(in srgb, var(--tc) 45%, transparent); color: #fff; font-weight: 700; }
+.ed-status { display: flex; gap: 14px; padding: 3px 12px; border-radius: 0 0 10px 10px; background: var(--tc); color: #fff; font: 12px -apple-system, sans-serif; }
+.ed-right { margin-left: auto; font-weight: 700; }
+.tk-cm { color: #6a9955; }
+.tk-kw { color: #569cd6; }
+.tk-var { color: #4fc1ff; }
+.tk-prop { color: #9cdcfe; }
+.tk-str { color: #ce9178; }
+.tk-num { color: #b5cea8; }
+.tk-type { color: #4ec9b0; }
+.tk-op { color: #d4d4d4; }

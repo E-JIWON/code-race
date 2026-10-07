@@ -3,6 +3,9 @@ export type TierId = 'sprout' | 'mid' | 'pro' | 'king'
 
 export type Tier = { id: TierId; name: string; rank: string; cpm: number; acc: number }
 
+// 등급별 최소 타수 (가정 — 실제 판정 붙일 때 확정)
+export const TIER_MIN: Record<TierId, number> = { sprout: 0, mid: 145, pro: 220, king: 310 }
+
 export const TIERS: Tier[] = [
   { id: 'sprout', name: '초급 개발자', rank: '하위 30%', cpm: 128, acc: 91 },
   { id: 'mid', name: '중급 개발자', rank: '상위 55%', cpm: 192, acc: 95 },
