@@ -90,6 +90,94 @@ export function TypeCard({ tier }: { tier: Tier }) {
   )
 }
 
+// ───── 공용 조각: 등급 사다리 · 오타 키보드 · 능력치 육각형 (여러 카드가 같이 씀) ─────
+function TierLadder({ tier }: { tier: Tier }) {
+  return (
+    <div className={`ladder lt-${tier.id}`}>
+      <p className="ladder-head">
+        <b>{tier.name}</b>
+        <span>
+          {tier.cpm}타/분 · {tier.rank}
+        </span>
+      </p>
+      <ol>
+        {TIERS.map((t, i) => {
+          const at = TIERS.indexOf(tier)
+          return (
+            <li key={t.id} className={i < at ? 'past' : i === at ? 'now' : ''}>
+              {t.name.replace(' 개발자', '')}
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}
+
+function KeyHeat() {
+  return (
+    <div className="km-board">
+      {KEY_ROWS.map((row, r) => (
+        <div key={r} className="km-row" style={{ paddingLeft: `${r * 14}px` }}>
+          {row.map(([k, shift]) => {
+            const miss = Math.max(KEY_MISS[k] ?? 0, KEY_MISS[shift] ?? 0)
+            return (
+              <span
+                key={k}
+                className="km-key"
+                style={
+                  {
+                    '--heat': `${Math.round((miss / MAX_MISS) * 100)}%`,
+                  } as React.CSSProperties
+                }
+              >
+                {shift && <small>{shift}</small>}
+                {k}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Radar({ className }: { className: string }) {
+  const C = 110
+  const R = 82
+  return (
+    <svg viewBox={`0 0 ${C * 2} ${C * 2}`} className={className} aria-label="능력치 육각형">
+      {[1, 0.66, 0.33].map((k) => (
+        <polygon
+          key={k}
+          points={radarPoints(
+            STATS.map(() => 100 * k),
+            R,
+            C,
+          )}
+          className="rpg-grid"
+        />
+      ))}
+      <polygon
+        points={radarPoints(
+          STATS.map((s) => s.value),
+          R,
+          C,
+        )}
+        className="rpg-shape"
+      />
+      {STATS.map((s, i) => {
+        const a = (Math.PI * 2 * i) / STATS.length - Math.PI / 2
+        return (
+          <text key={s.key} x={C + Math.cos(a) * (R + 18)} y={C + Math.sin(a) * (R + 18) + 4} textAnchor="middle">
+            {s.key} {s.value}
+          </text>
+        )
+      })}
+    </svg>
+  )
+}
+
 // ───── 2. 키보드 지도 — 자주 틀린 키가 달아오름 ─────
 const KEY_ROWS: [string, string][][] = [
   [
@@ -141,47 +229,8 @@ export function KeyMap({ tier }: { tier: Tier }) {
           <p className="km-kicker">{SAMPLE.player}의 손가락 지도</p>
           <p className="km-title">닫는 괄호에서 가장 많이 미끄러져요</p>
         </header>
-        <div className={`ladder lt-${tier.id}`}>
-          <p className="ladder-head">
-            <b>{tier.name}</b>
-            <span>
-              {tier.cpm}타/분 · {tier.rank}
-            </span>
-          </p>
-          <ol>
-            {TIERS.map((t, i) => {
-              const at = TIERS.indexOf(tier)
-              return (
-                <li key={t.id} className={i < at ? 'past' : i === at ? 'now' : ''}>
-                  {t.name.replace(' 개발자', '')}
-                </li>
-              )
-            })}
-          </ol>
-        </div>
-        <div className="km-board">
-          {KEY_ROWS.map((row, r) => (
-            <div key={r} className="km-row" style={{ paddingLeft: `${r * 14}px` }}>
-              {row.map(([k, shift]) => {
-                const miss = Math.max(KEY_MISS[k] ?? 0, KEY_MISS[shift] ?? 0)
-                return (
-                  <span
-                    key={k}
-                    className="km-key"
-                    style={
-                      {
-                        '--heat': `${Math.round((miss / MAX_MISS) * 100)}%`,
-                      } as React.CSSProperties
-                    }
-                  >
-                    {shift && <small>{shift}</small>}
-                    {k}
-                  </span>
-                )
-              })}
-            </div>
-          ))}
-        </div>
+        <TierLadder tier={tier} />
+        <KeyHeat />
         <footer>
           <span className="km-label">가장 많이 틀린 키</span>
           {worst.map(([k, v]) => (
@@ -272,8 +321,6 @@ function radarPoints(values: number[], r: number, c: number) {
 }
 
 export function RpgStats({ tier }: { tier: Tier }) {
-  const C = 110
-  const R = 82
   return (
     <Shareable name="rpg" hint="여섯 능력치 · 레벨은 플레이 판 수">
       <div className={`rpg rp-${tier.id}`}>
@@ -305,35 +352,7 @@ export function RpgStats({ tier }: { tier: Tier }) {
             <em>{PROFILE.consistency}</em>
           </p>
         </div>
-        <svg viewBox={`0 0 ${C * 2} ${C * 2}`} className="rpg-radar" aria-label="능력치 육각형">
-          {[1, 0.66, 0.33].map((k) => (
-            <polygon
-              key={k}
-              points={radarPoints(
-                STATS.map(() => 100 * k),
-                R,
-                C,
-              )}
-              className="rpg-grid"
-            />
-          ))}
-          <polygon
-            points={radarPoints(
-              STATS.map((s) => s.value),
-              R,
-              C,
-            )}
-            className="rpg-shape"
-          />
-          {STATS.map((s, i) => {
-            const a = (Math.PI * 2 * i) / STATS.length - Math.PI / 2
-            return (
-              <text key={s.key} x={C + Math.cos(a) * (R + 18)} y={C + Math.sin(a) * (R + 18) + 4} textAnchor="middle">
-                {s.key} {s.value}
-              </text>
-            )
-          })}
-        </svg>
+        <Radar className="rpg-radar" />
         <ul className="rpg-skills">
           <li>
             <b>패시브</b> 자동완성 — Tab 한 번에 단어가 완성됨
@@ -532,6 +551,54 @@ export function EditorCard({ tier }: { tier: Tier }) {
           <span className="ed-right">{tier.cpm} 타/분</span>
           <span>{tier.name}</span>
           <span>TypeScript</span>
+        </div>
+      </div>
+    </Shareable>
+  )
+}
+
+// ───── 8. 개발자 캐릭터 시트 — 터미널 틀 + 큰 타수 + 사다리 / 키보드 지도 + 육각형 / 스킬 ─────
+export function CharacterSheet({ tier }: { tier: Tier }) {
+  const worst = Object.entries(KEY_MISS).sort((a, b) => b[1] - a[1])[0]
+  return (
+    <Shareable name="sheet" hint="터미널 명함 + 키보드 지도 + RPG 능력치를 한 장에">
+      <div className={`term sheet tt-${tier.id}`}>
+        <div className="term-bar">
+          <i />
+          <i />
+          <i />
+          <span>내 타자 실력 — 코드 타자 레이스</span>
+        </div>
+        <div className="term-body">
+          <p className="term-cmd">
+            <b>{SAMPLE.player}@code-race</b> ~ % 내-실력 --보여줘
+          </p>
+          <div className="sheet-hero">
+            <div>
+              <pre className="term-logo">{bigNumber(tier.cpm)}</pre>
+              <p className="term-unit">타/분 · 정확도 {tier.acc}% · Lv.{PROFILE.plays}</p>
+            </div>
+            <TierLadder tier={tier} />
+          </div>
+          <div className="sheet-mid">
+            <div>
+              <p className="sheet-label"># 손가락 지도 — 빨갈수록 자주 틀림</p>
+              <KeyHeat />
+            </div>
+            <div>
+              <p className="sheet-label"># 능력치</p>
+              <Radar className="rpg-radar sheet-radar" />
+            </div>
+          </div>
+          <p className="sheet-skill">
+            <b className="plus">+ 패시브</b> 자동완성 — Tab 한 번에 단어 완성
+          </p>
+          <p className="sheet-skill">
+            <b className="minus">- 디버프</b> 괄호 미아 — <code>{worst[0]}</code> 앞에서 {worst[1]}% 확률로 미끄러짐
+          </p>
+          <p className="term-cmd">
+            <b>{SAMPLE.player}@code-race</b> ~ % <span className="term-caret" />
+          </p>
         </div>
       </div>
     </Shareable>

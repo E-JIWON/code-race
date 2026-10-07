@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { EditorCard, KeyMap, Neofetch, PromotionPR, ReadmeBadges, RpgStats, TypeCard } from './Cards'
+import { CharacterSheet, EditorCard, KeyMap, Neofetch, PromotionPR, ReadmeBadges, RpgStats, TypeCard } from './Cards'
 import { TIERS } from './tiers'
 import './tickets.css'
 
@@ -7,6 +7,7 @@ import './tickets.css'
 const Badge3D = lazy(() => import('./Badge3D').then((m) => ({ default: m.Badge3D })))
 
 const VARIANTS = [
+  { id: 'sheet', name: '★ 캐릭터 시트', View: CharacterSheet },
   { id: 'badge3d', name: '3D 명찰', View: Badge3D },
   { id: 'type', name: '개발자 유형', View: TypeCard },
   { id: 'keymap', name: '키보드 지도', View: KeyMap },

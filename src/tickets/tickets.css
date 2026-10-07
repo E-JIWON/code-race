@@ -263,3 +263,29 @@
 .tk-num { color: #b5cea8; }
 .tk-type { color: #4ec9b0; }
 .tk-op { color: #d4d4d4; }
+
+/* ───────── 8. 캐릭터 시트 (터미널 + 키보드 지도 + RPG) ───────── */
+.sheet { width: 760px; }
+.sheet .term-body { padding: 16px 22px 18px; }
+.sheet-hero { display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 28px; margin: 14px 0 18px; }
+.sheet .term-logo { font-size: 15px; }
+.sheet .ladder { margin: 0; }
+.sheet .ladder-head b { font-size: 30px; color: var(--tc); }
+.sheet .ladder li { border-top-color: #262c36; }
+.sheet .ladder li.past { border-top-color: color-mix(in srgb, var(--tc) 45%, transparent); }
+.sheet .ladder li.now { border-top-color: var(--tc); color: var(--tc); }
+.sheet-mid { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start; }
+.sheet-label { margin-bottom: 8px !important; color: #6e7681; font-size: 12px; }
+.sheet .km-board { margin: 0; padding: 10px; gap: 4px; }
+.sheet .km-row { gap: 4px; }
+.sheet .km-key { width: 25px; height: 27px; border-radius: 5px; font-size: 11px; }
+.sheet .km-key small { font-size: 7px; top: 1px; left: 3px; }
+.sheet-radar { width: 200px; margin: 0 auto; }
+.sheet-radar .rpg-shape { fill: color-mix(in srgb, var(--tc) 40%, transparent); stroke: var(--tc); }
+.sheet-radar text { fill: #c9d1d9; }
+.sheet-skill { margin-top: 6px !important; font-size: 13px; }
+.sheet-skill b { margin-right: 6px; }
+.sheet-skill .plus { color: #3fb950; }
+.sheet-skill .minus { color: #ff7b72; }
+.sheet-skill code { padding: 0 6px; border-radius: 4px; background: rgba(255, 123, 114, 0.18); color: #fff; }
+.sheet .term-cmd:last-child { margin-top: 14px !important; }
