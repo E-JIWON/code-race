@@ -57,6 +57,7 @@ h1 { font-size: 18px; margin: 0; }
 .fns button.on { border-color: var(--accent); color: var(--accent); }
 .fns .idx { color: var(--ink-3); font-size: 11px; }
 .fns .check { color: var(--accent); }
+.fns .deep { padding: 0 6px; border-radius: 999px; background: var(--line); color: var(--ink-2); font: 10px/1.6 -apple-system, sans-serif; }
 
 button:disabled { opacity: 0.4; cursor: default; }
 
@@ -175,6 +176,16 @@ kbd {
 .result p { margin: 4px 0; color: var(--ink-2); }
 .result .big { font: 600 28px var(--mono); color: var(--ink); }
 .record { margin-left: 8px; font-size: 14px; color: var(--accent); }
+.result .tip {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.result .tip b { color: var(--accent); margin-right: 4px; }
 
 .weak code {
   margin-left: 8px;

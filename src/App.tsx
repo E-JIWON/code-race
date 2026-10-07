@@ -302,6 +302,7 @@ export default function App() {
           >
             <span className="idx">{i + 1}</span>
             {x.title}
+            {x.deep && <span className="deep">심화</span>}
             {store.get(`best:${x.id}`) !== null && <span className="check">✓</span>}
           </button>
         ))}
@@ -368,6 +369,7 @@ export default function App() {
           <section className="result">
             <p className="big">{liveCpm} 타/분 {newRecord && <span className="record">신기록!</span>}</p>
             <p>정확도 {accuracy}% · {(elapsed / 1000).toFixed(1)}초 · 오타 {s.errors}번</p>
+            <p className="tip"><b>그래서 개발할 땐 →</b> {snippet.tip}</p>
             {weak.length > 0 && (
               <p className="weak">약한 기호 {weak.map(([ch, n]) => <code key={ch}>{SHOW[ch] ?? ch} ×{n}</code>)}</p>
             )}
