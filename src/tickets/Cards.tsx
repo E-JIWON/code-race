@@ -623,3 +623,67 @@ export function CharacterSheet({ tier, vertical = false }: { tier: Tier; vertica
 
 // 세로형 (휴대폰 공유용)
 export const CharacterSheetVertical = ({ tier }: { tier: Tier }) => <CharacterSheet tier={tier} vertical />
+
+// 좌우형 — 창 두 개: 왼쪽 = 내 실력(타수·등급·손가락 지도), 오른쪽 = 내 능력치(육각형·한마디·스킬)
+export function SplitSheet({ tier }: { tier: Tier }) {
+  const worst = Object.entries(KEY_MISS).sort((a, b) => b[1] - a[1])[0]
+  const top = STATS.reduce((a, b) => (b.value > a.value ? b : a))
+  const [trait, desc] = STAT_LINE[top.key]
+  const bar = (title: string) => (
+    <div className="term-bar">
+      <i />
+      <i />
+      <i />
+      <span>{title}</span>
+    </div>
+  )
+  return (
+    <Shareable name="sheet-split" hint="왼쪽은 실력, 오른쪽은 능력치 — 두 창을 나란히">
+      <div className={`split tt-${tier.id}`}>
+        <div className="term sheet vertical">
+          {bar('내 타자 실력')}
+          <div className="term-body">
+            <p className="term-cmd">
+              <b>{SAMPLE.player}@code-race</b> ~ % 내-실력
+            </p>
+            <div className="sheet-hero">
+              <div>
+                <pre className="term-logo">{bigNumber(tier.cpm)}</pre>
+                <p className="term-unit">타/분 · 정확도 {tier.acc}% · Lv.{PROFILE.plays}</p>
+              </div>
+              <TierLadder tier={tier} />
+            </div>
+            <p className="sheet-label"># 손가락 지도 — 빨갈수록 자주 틀림</p>
+            <KeyHeat />
+          </div>
+        </div>
+        <div className="term sheet vertical split-right">
+          {bar('내 능력치')}
+          <div className="term-body">
+            <p className="term-cmd">
+              <b>{SAMPLE.player}@code-race</b> ~ % 내-능력치
+            </p>
+            <Radar className="rpg-radar split-radar" />
+            <p className="split-verdict">
+              당신은 <b>{trait}</b> 타입이군요!
+            </p>
+            <p className="split-desc">
+              {desc} · {top.key} {top.value}
+            </p>
+            <div className="split-skills">
+              <p className="sheet-skill">
+                <b className="plus">+ 패시브</b> 자동완성 — Tab 한 번에 단어 완성
+              </p>
+              <p className="sheet-skill">
+                <b className="minus">- 디버프</b> 괄호 미아 — <code>{worst[0]}</code> 앞에서 {worst[1]}% 미끄러짐
+              </p>
+            </div>
+            <p className="term-cmd split-prompt">
+              <b>{SAMPLE.player}@code-race</b> ~ % <span className="term-caret" />
+            </p>
+          </div>
+        </div>
+      </div>
+    </Shareable>
+  )
+}

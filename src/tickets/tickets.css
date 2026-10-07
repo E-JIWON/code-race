@@ -316,7 +316,17 @@
 .sheet-desc { margin-top: 10px !important; color: #8b949e; font-size: 12px; word-break: keep-all; }
 .sheet-top { margin-top: 10px !important; color: #6e7681; font-size: 12px; }
 .sheet-top b { color: var(--tc); }
-/* 가로형은 오른쪽 칸이 좁아서 육각형을 조금 줄여 나란히 */
-.sheet:not(.vertical) .sheet-radar { width: 165px; margin: 0; }
-.sheet:not(.vertical) .sheet-trait { font-size: 17px; }
 .sheet.vertical .sheet-radar { width: 190px; margin: 0; }
+
+/* 좌우형 — 창 두 개 나란히, 높이 맞춤 */
+.split { display: flex; align-items: stretch; gap: 16px; }
+.split .term { display: flex; flex-direction: column; }
+.split .term-body { display: flex; flex: 1; flex-direction: column; }
+.split-radar { width: 250px; margin: 18px auto 6px; }
+.split-radar .rpg-shape { fill: color-mix(in srgb, var(--tc) 40%, transparent); stroke: var(--tc); }
+.split-radar text { fill: #c9d1d9; }
+.split-verdict { margin-top: 6px !important; text-align: center; font-size: 15px; color: #c9d1d9; }
+.split-verdict b { color: var(--tc); font-size: 20px; font-weight: 900; }
+.split-desc { margin-top: 6px !important; text-align: center; color: #8b949e; font-size: 12px; }
+.split-skills { margin-top: 18px; padding-top: 12px; border-top: 1px dashed #30363d; }
+.split-prompt { margin-top: auto !important; padding-top: 14px; }
