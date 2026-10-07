@@ -24,13 +24,14 @@ function normalCdf(z: number) {
   const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))))
   return z > 0 ? 1 - p : p
 }
-export const topPercent = (cpm: number) => Math.max(1, Math.min(99, Math.round((1 - normalCdf((cpm - MEAN) / SD)) * 100)))
+export const topPercent = (cpm: number) =>
+  Math.max(1, Math.min(99, Math.round((1 - normalCdf((cpm - MEAN) / SD)) * 100)))
 
 export type Profile = {
   plays: number
   nightPlays: number // 밤 10시~새벽 4시에 끝낸 판
-  keyTry: Record<string, number> // 글자별 친 횟수
-  keyMiss: Record<string, number> // 글자별 틀린 횟수
+  keyTry: Record<string, number>
+  keyMiss: Record<string, number>
 }
 const EMPTY: Profile = { plays: 0, nightPlays: 0, keyTry: {}, keyMiss: {} }
 const KEY = 'code-race:profile'
@@ -43,7 +44,6 @@ export function loadProfile(): Profile {
   }
 }
 
-// 한 판 끝날 때 누적 (typedChars = 직접 친 글자들, misses = 틀린 글자별 횟수)
 export function recordRound(typedChars: string[], misses: Record<string, number>, at = new Date()): Profile {
   const p = loadProfile()
   const keyTry = { ...p.keyTry }
@@ -62,7 +62,21 @@ export function recordRound(typedChars: string[], misses: Record<string, number>
 
 // 자판 한 칸 = [기본 글자, Shift 글자]
 export const KEY_ROWS: [string, string][][] = [
-  [['`', '~'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', '('], ['0', ')'], ['-', '_'], ['=', '+']],
+  [
+    ['`', '~'],
+    ['1', '!'],
+    ['2', '@'],
+    ['3', '#'],
+    ['4', '$'],
+    ['5', '%'],
+    ['6', '^'],
+    ['7', '&'],
+    ['8', '*'],
+    ['9', '('],
+    ['0', ')'],
+    ['-', '_'],
+    ['=', '+'],
+  ],
   [...[...'qwertyuiop'].map((k): [string, string] => [k, k.toUpperCase()]), ['[', '{'], [']', '}'], ['\\', '|']],
   [...[...'asdfghjkl'].map((k): [string, string] => [k, k.toUpperCase()]), [';', ':'], ["'", '"']],
   [...[...'zxcvbnm'].map((k): [string, string] => [k, k.toUpperCase()]), [',', '<'], ['.', '>'], ['/', '?']],
@@ -81,7 +95,6 @@ export function keyMissRate(p: Profile) {
   return rate
 }
 
-// 가장 많이 틀린 실제 글자 (충분히 친 것 중)
 export function worstChar(p: Profile): [string, number] | null {
   const scored = Object.entries(p.keyMiss)
     .filter(([ch]) => (p.keyTry[ch] ?? 0) >= MIN_TRIES)
@@ -122,9 +135,22 @@ export const STAT_LINE: Record<string, [string, string]> = {
   야행성: ['야행성이 강한', '새벽에 손이 제일 잘 풀려요'],
 }
 
-// 가장 많이 틀린 글자 → 디버프 이름
 export const DEBUFF: Record<string, string> = {
-  ')': '괄호 미아', '(': '괄호 미아', '}': '중괄호 미아', '{': '중괄호 미아', ']': '대괄호 미아', '[': '대괄호 미아',
-  ';': '세미콜론 실종', '>': '화살표 공포증', '=': '등호 망설임', "'": '따옴표 실종', '"': '따옴표 실종',
-  '.': '체이닝 과속', ',': '쉼표 실종', ':': '콜론 혼동', '`': '백틱 미아', '_': '밑줄 미아', '|': '파이프 혼동',
+  ')': '괄호 미아',
+  '(': '괄호 미아',
+  '}': '중괄호 미아',
+  '{': '중괄호 미아',
+  ']': '대괄호 미아',
+  '[': '대괄호 미아',
+  ';': '세미콜론 실종',
+  '>': '화살표 공포증',
+  '=': '등호 망설임',
+  "'": '따옴표 실종',
+  '"': '따옴표 실종',
+  '.': '체이닝 과속',
+  ',': '쉼표 실종',
+  ':': '콜론 혼동',
+  '`': '백틱 미아',
+  _: '밑줄 미아',
+  '|': '파이프 혼동',
 }

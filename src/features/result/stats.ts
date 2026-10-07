@@ -1,6 +1,6 @@
 // Monkeytype식 결과 통계: 초 단위 속도·원시 타수·일관성
 
-export type KeyLog = [ms: number, ok: number, err: number][] // 시작 후 ms, 맞게 친 글자 수, 오타 수
+export type KeyLog = [ms: number, ok: number, err: number][]
 
 export function perSecond(keys: KeyLog, totalMs: number) {
   const n = Math.max(1, Math.ceil(totalMs / 1000))

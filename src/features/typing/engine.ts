@@ -76,26 +76,33 @@ export function buildLines(raw: string, b: Block): Line[] {
   const st = { block: false }
   const rows: { no: number | null; indent: number; text: string; comment: boolean }[] = []
 
-  raw.split('\n').slice(b.from - 1, b.to).forEach((l, i) => {
-    const no = b.from + i
-    const t = l.replace(/\t/g, '  ').trimEnd()
-    const code = splitLine(t, b.lang, st).filter((s) => !s.comment).map((s) => s.text).join('').trim()
-    const indent = t.length - t.trimStart().length
-    const skip = b.skip?.find((s) => no >= s.from && no <= s.to)
-    if (skip) {
-      if (no === skip.from) rows.push({ no: null, indent, text: `${mark} … ${skip.text}`, comment: true })
-      return
-    }
-    if (!code) {
-      if (!t) rows.push({ no, indent: 0, text: '', comment: false }) // 주석만 있던 줄은 버리고 진짜 빈 줄만 유지
-      return
-    }
-    for (const n of b.notes ?? []) {
-      if (n.line !== no) continue
-      for (const part of n.text.split('\n')) rows.push({ no: null, indent, text: `${mark} ${part}`, comment: true })
-    }
-    rows.push({ no, indent, text: code, comment: false })
-  })
+  raw
+    .split('\n')
+    .slice(b.from - 1, b.to)
+    .forEach((l, i) => {
+      const no = b.from + i
+      const t = l.replace(/\t/g, '  ').trimEnd()
+      const code = splitLine(t, b.lang, st)
+        .filter((s) => !s.comment)
+        .map((s) => s.text)
+        .join('')
+        .trim()
+      const indent = t.length - t.trimStart().length
+      const skip = b.skip?.find((s) => no >= s.from && no <= s.to)
+      if (skip) {
+        if (no === skip.from) rows.push({ no: null, indent, text: `${mark} … ${skip.text}`, comment: true })
+        return
+      }
+      if (!code) {
+        if (!t) rows.push({ no, indent: 0, text: '', comment: false }) // 주석만 있던 줄은 버리고 진짜 빈 줄만 유지
+        return
+      }
+      for (const n of b.notes ?? []) {
+        if (n.line !== no) continue
+        for (const part of n.text.split('\n')) rows.push({ no: null, indent, text: `${mark} ${part}`, comment: true })
+      }
+      rows.push({ no, indent, text: code, comment: false })
+    })
 
   // 빈 줄 연속·앞뒤·여는 괄호 바로 뒤 빈 줄 정리
   const kept = rows.filter((r, i) => r.text || (i > 0 && rows[i - 1].text && !rows[i - 1].text.endsWith('{')))

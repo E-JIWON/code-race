@@ -1,8 +1,18 @@
-// 결과 카드 — 왼쪽 창: 내 타자 실력(타수·등급·손가락 지도) / 오른쪽 창: 내 능력치(육각형·한마디·스킬)
 import { useRef, type CSSProperties } from 'react'
 import { toPng } from 'html-to-image'
-import { DEBUFF, KEY_ROWS, STAT_LINE, TIERS, keyMissRate, statsOf, tierOf, topPercent, worstChar, type Profile } from './profile'
-import './card.css'
+import {
+  DEBUFF,
+  KEY_ROWS,
+  STAT_LINE,
+  TIERS,
+  keyMissRate,
+  statsOf,
+  tierOf,
+  topPercent,
+  worstChar,
+  type Profile,
+} from './profile'
+import './ResultCard.css'
 
 // 5줄짜리 블록 숫자 — 타수를 터미널 그림처럼 크게
 const DIGITS: Record<string, string[]> = {
@@ -17,7 +27,8 @@ const DIGITS: Record<string, string[]> = {
   '8': ['███', '█ █', '███', '█ █', '███'],
   '9': ['███', '█ █', '███', '  █', '███'],
 }
-const bigNumber = (n: number) => [0, 1, 2, 3, 4].map((r) => [...String(n)].map((d) => DIGITS[d][r]).join(' ')).join('\n')
+const bigNumber = (n: number) =>
+  [0, 1, 2, 3, 4].map((r) => [...String(n)].map((d) => DIGITS[d][r]).join(' ')).join('\n')
 
 function radarPoints(values: number[], r: number, c: number) {
   return values
@@ -35,9 +46,28 @@ function Radar({ stats, color }: { stats: { key: string; value: number }[]; colo
   return (
     <svg viewBox={`0 0 ${C * 2} ${C * 2}`} className="rc-radar" aria-label="능력치 육각형">
       {[1, 0.66, 0.33].map((k) => (
-        <polygon key={k} points={radarPoints(stats.map(() => 100 * k), R, C)} fill="none" stroke="rgba(255,255,255,0.14)" />
+        <polygon
+          key={k}
+          points={radarPoints(
+            stats.map(() => 100 * k),
+            R,
+            C,
+          )}
+          fill="none"
+          stroke="rgba(255,255,255,0.14)"
+        />
       ))}
-      <polygon points={radarPoints(stats.map((s) => Math.max(s.value, 4)), R, C)} fill={color} fillOpacity={0.4} stroke={color} strokeWidth={2} />
+      <polygon
+        points={radarPoints(
+          stats.map((s) => Math.max(s.value, 4)),
+          R,
+          C,
+        )}
+        fill={color}
+        fillOpacity={0.4}
+        stroke={color}
+        strokeWidth={2}
+      />
       {stats.map((s, i) => {
         const a = (Math.PI * 2 * i) / stats.length - Math.PI / 2
         return (
@@ -131,7 +161,11 @@ export function ResultCard({ player, cpm, acc, consistency, assist, profile }: P
               {KEY_ROWS.map((row, r) => (
                 <div key={r} className="rc-row">
                   {row.map(([k]) => (
-                    <span key={k} className="rc-key" style={{ '--heat': `${Math.round((rate[k] / maxRate) * 100)}%` } as CSSProperties}>
+                    <span
+                      key={k}
+                      className="rc-key"
+                      style={{ '--heat': `${Math.round((rate[k] / maxRate) * 100)}%` } as CSSProperties}
+                    >
                       {k}
                     </span>
                   ))}
@@ -166,7 +200,8 @@ export function ResultCard({ player, cpm, acc, consistency, assist, profile }: P
               <p>
                 {worst ? (
                   <>
-                    <b className="minus">- 디버프</b> {DEBUFF[worst[0]] ?? '손가락 꼬임'} — <code>{worst[0]}</code> 앞에서 {worst[1]}% 미끄러짐
+                    <b className="minus">- 디버프</b> {DEBUFF[worst[0]] ?? '손가락 꼬임'} — <code>{worst[0]}</code>{' '}
+                    앞에서 {worst[1]}% 미끄러짐
                   </>
                 ) : (
                   <>
@@ -183,8 +218,12 @@ export function ResultCard({ player, cpm, acc, consistency, assist, profile }: P
       </div>
       <div className="rc-actions">
         <button onClick={() => save(ref.current, 'card')}>카드 합쳐서 저장</button>
-        <button onClick={() => save(ref.current?.querySelector('.rc-left') as HTMLElement, 'card-left')}>왼쪽만 저장</button>
-        <button onClick={() => save(ref.current?.querySelector('.rc-right') as HTMLElement, 'card-right')}>오른쪽만 저장</button>
+        <button onClick={() => save(ref.current?.querySelector('.rc-left') as HTMLElement, 'card-left')}>
+          왼쪽만 저장
+        </button>
+        <button onClick={() => save(ref.current?.querySelector('.rc-right') as HTMLElement, 'card-right')}>
+          오른쪽만 저장
+        </button>
       </div>
     </section>
   )

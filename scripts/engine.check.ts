@@ -1,26 +1,55 @@
 // node scripts/engine.check.ts 로 실행 (--net 붙이면 실제 소스로 문제 전부 검사)
 import assert from 'node:assert/strict'
-import { buildLines, closerOf, skipAuto, toChars, typedCount, wordAt, type Block } from '../src/engine.ts'
-import { LIBRARIES, rawUrl } from '../src/snippets.ts'
-import { consistency, perSecond, rawCpm } from '../src/stats.ts'
-import { keyMissRate, statsOf, tierOf, topPercent, worstChar } from '../src/card/profile.ts'
+import {
+  buildLines,
+  closerOf,
+  skipAuto,
+  toChars,
+  typedCount,
+  wordAt,
+  type Block,
+} from '../src/features/typing/engine.ts'
+import { LIBRARIES, rawUrl } from '../src/features/course/snippets.ts'
+import { consistency, perSecond, rawCpm } from '../src/features/result/stats.ts'
+import { keyMissRate, statsOf, tierOf, topPercent, worstChar } from '../src/features/result/profile.ts'
 
 // 결과 카드: 등급 경계, 상위 %, 자판 칸별 오타율(기본+Shift 합산), 가장 많이 틀린 글자
-assert.deepEqual([100, 145, 219, 220, 310].map((c) => tierOf(c).id), ['sprout', 'mid', 'mid', 'pro', 'king'])
+assert.deepEqual(
+  [100, 145, 219, 220, 310].map((c) => tierOf(c).id),
+  ['sprout', 'mid', 'mid', 'pro', 'king'],
+)
 assert.equal(topPercent(182), 50)
 assert.ok(topPercent(362) <= 2 && topPercent(100) >= 85)
 const prof = { plays: 4, nightPlays: 1, keyTry: { '0': 6, ')': 5, a: 50, ';': 2 }, keyMiss: { ')': 2, a: 1, ';': 2 } }
 assert.equal(keyMissRate(prof)['0'], 18) // ')'는 Shift+0 → 0번 칸에 합쳐서 2/11
 assert.equal(keyMissRate(prof)[';'], 0) // 5번 미만 친 키는 판단 보류
 assert.deepEqual(worstChar(prof), [')', 40])
-assert.deepEqual(statsOf(prof, { cpm: 200, acc: 96, consistency: 70 }).map((s) => s.value), [50, 80, 70, 0, 16, 25]) // 기호는 7번 중 4번 틀려 43% → 0
+assert.deepEqual(
+  statsOf(prof, { cpm: 200, acc: 96, consistency: 70 }).map((s) => s.value),
+  [50, 80, 70, 0, 16, 25],
+) // 기호는 7번 중 4번 틀려 43% → 0
 
 // 결과 통계: 2초 동안 1초에 5타씩 → 300타/분, 고르면 일관성 100
-const g = perSecond([[100, 5, 0], [1500, 5, 1]], 2000)
+const g = perSecond(
+  [
+    [100, 5, 0],
+    [1500, 5, 1],
+  ],
+  2000,
+)
 assert.deepEqual(g.cpm, [300, 300])
 assert.deepEqual(g.raw, [300, 360])
 assert.deepEqual(g.err, [0, 1])
-assert.equal(rawCpm([[100, 5, 0], [1500, 5, 1]], 2000), 330)
+assert.equal(
+  rawCpm(
+    [
+      [100, 5, 0],
+      [1500, 5, 1],
+    ],
+    2000,
+  ),
+  330,
+)
 assert.equal(consistency([300, 300, 300]), 100)
 assert.ok(consistency([100, 500, 100]) < 60)
 
@@ -31,12 +60,16 @@ const render = (raw: string, b: Partial<Block> = {}) =>
 
 // 원본 주석은 빠지고, 한글 해설이 그 줄 위에 같은 들여쓰기로 들어감
 assert.equal(
-  render('/**\n * doc\n */\nfunction f() {\n  // old\n  return "//x" // trail\n}', { notes: [{ line: 6, text: '돌려줌' }] }),
+  render('/**\n * doc\n */\nfunction f() {\n  // old\n  return "//x" // trail\n}', {
+    notes: [{ line: 6, text: '돌려줌' }],
+  }),
   'function f() {\n  // 돌려줌\n  return "//x"\n}',
 )
 // 접기 + 공통 들여쓰기 제거 + 빈 줄 정리
 assert.equal(
-  render('\tif (a) {\n\t\tthrow 1\n\t\tthrow 2\n\n\n\t\tb()\n\t}\n', { skip: [{ from: 2, to: 3, text: '검사 (생략)' }] }),
+  render('\tif (a) {\n\t\tthrow 1\n\t\tthrow 2\n\n\n\t\tb()\n\t}\n', {
+    skip: [{ from: 2, to: 3, text: '검사 (생략)' }],
+  }),
   'if (a) {\n  // … 검사 (생략)\n\n  b()\n}',
 )
 
