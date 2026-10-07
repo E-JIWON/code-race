@@ -558,11 +558,14 @@ export function EditorCard({ tier }: { tier: Tier }) {
 }
 
 // ───── 8. 개발자 캐릭터 시트 — 터미널 틀 + 큰 타수 + 사다리 / 키보드 지도 + 육각형 / 스킬 ─────
-export function CharacterSheet({ tier }: { tier: Tier }) {
+export function CharacterSheet({ tier, vertical = false }: { tier: Tier; vertical?: boolean }) {
   const worst = Object.entries(KEY_MISS).sort((a, b) => b[1] - a[1])[0]
   return (
-    <Shareable name="sheet" hint="터미널 명함 + 키보드 지도 + RPG 능력치를 한 장에">
-      <div className={`term sheet tt-${tier.id}`}>
+    <Shareable
+      name={vertical ? 'sheet-vertical' : 'sheet'}
+      hint={vertical ? '휴대폰 공유용 세로형 — 인스타 스토리 비율에 가깝게' : '터미널 명함 + 키보드 지도 + RPG 능력치를 한 장에'}
+    >
+      <div className={`term sheet tt-${tier.id} ${vertical ? 'vertical' : ''}`}>
         <div className="term-bar">
           <i />
           <i />
@@ -604,3 +607,6 @@ export function CharacterSheet({ tier }: { tier: Tier }) {
     </Shareable>
   )
 }
+
+// 세로형 (휴대폰 공유용)
+export const CharacterSheetVertical = ({ tier }: { tier: Tier }) => <CharacterSheet tier={tier} vertical />

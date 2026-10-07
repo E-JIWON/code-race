@@ -289,3 +289,21 @@
 .sheet-skill .minus { color: #ff7b72; }
 .sheet-skill code { padding: 0 6px; border-radius: 4px; background: rgba(255, 123, 114, 0.18); color: #fff; }
 .sheet .term-cmd:last-child { margin-top: 14px !important; }
+
+/* 세로형 — 한 줄로 쌓고 가운데 정렬 */
+.sheet.vertical { width: 400px; }
+.sheet.vertical .term-body { padding: 14px 18px 16px; }
+.sheet.vertical .sheet-hero { grid-template-columns: 1fr; gap: 16px; justify-items: center; margin: 18px 0 20px; text-align: center; }
+.sheet.vertical .sheet-hero > div:first-child { display: flex; flex-direction: column; align-items: center; }
+.sheet.vertical .term-logo { font-size: 20px; }
+.sheet.vertical .ladder { width: 100%; }
+.sheet.vertical .ladder-head { flex-direction: column; align-items: center; gap: 2px; }
+.sheet.vertical .ladder-head b { font-size: 28px; }
+.sheet.vertical .sheet-mid { grid-template-columns: 1fr; gap: 16px; }
+.sheet.vertical .km-board { padding: 8px; gap: 3px; }
+.sheet.vertical .km-row { gap: 3px; }
+.sheet.vertical .km-row:nth-child(n) { padding-left: 0 !important; justify-content: center; }
+.sheet.vertical .km-key { width: 22px; height: 25px; border-radius: 4px; font-size: 10px; }
+.sheet.vertical .km-key small { display: none; }
+.sheet.vertical .sheet-radar { width: 230px; }
+.sheet.vertical .sheet-skill { font-size: 12px; }
