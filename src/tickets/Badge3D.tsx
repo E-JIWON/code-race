@@ -3,7 +3,7 @@
 import * as THREE from 'three'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, extend, useFrame, useThree, type ThreeElement } from '@react-three/fiber'
-import { Environment, Lightformer } from '@react-three/drei'
+import { Environment, Lightformer, RoundedBox } from '@react-three/drei'
 import {
   BallCollider, CuboidCollider, Physics, RigidBody, useRopeJoint, useSphericalJoint, type RapierRigidBody,
 } from '@react-three/rapier'
@@ -20,13 +20,15 @@ declare module '@react-three/fiber' {
 
 const CARD_W = 1.6
 const CARD_H = 2.25
+const ROPE = 0.45 // 줄 마디 길이 (짧게 해서 카드가 화면 가운데 오게)
 
 // 등급별 3D 재질 — 금·은은 금속, 킹갓제너럴은 무지개 간섭색(iridescence)
-const MATERIAL: Record<TierId, { bg: [string, string]; ink: string; sub: string; metal: number; rough: number; irid: number }> = {
-  sprout: { bg: ['#eef4e6', '#d3e2c4'], ink: '#23301c', sub: '#5f7152', metal: 0, rough: 0.8, irid: 0 },
-  mid: { bg: ['#f1f3f6', '#a7afb9'], ink: '#15191e', sub: '#4d5560', metal: 0.75, rough: 0.28, irid: 0 },
-  pro: { bg: ['#ffe9a6', '#c79633'], ink: '#2c1d03', sub: '#6b4c12', metal: 0.85, rough: 0.22, irid: 0 },
-  king: { bg: ['#2a1f4a', '#0b0816'], ink: '#ffffff', sub: '#c9c1ff', metal: 0.3, rough: 0.15, irid: 1 },
+type Mat = { bg: [string, string]; ink: string; sub: string; edge: string; metal: number; rough: number; irid: number }
+const MATERIAL: Record<TierId, Mat> = {
+  sprout: { bg: ['#eef4e6', '#cfe0bf'], ink: '#1d2a17', sub: '#55684a', edge: '#b9cfa8', metal: 0, rough: 0.7, irid: 0 },
+  mid: { bg: ['#f4f6f9', '#b4bcc6'], ink: '#111418', sub: '#47505b', edge: '#9aa3ad', metal: 0.55, rough: 0.3, irid: 0 },
+  pro: { bg: ['#fff0bd', '#d6a23f'], ink: '#271901', sub: '#644510', edge: '#b8842a', metal: 0.6, rough: 0.25, irid: 0 },
+  king: { bg: ['#4b3aa0', '#1a1240'], ink: '#ffffff', sub: '#d9d2ff', edge: '#8f7cff', metal: 0.5, rough: 0.12, irid: 1 },
 }
 
 // 캔버스에 카드 앞·뒷면을 그려 텍스처로 씀 (모서리는 투명하게 둥글림)
@@ -43,6 +45,26 @@ function faceTexture(tier: Tier, side: 'front' | 'back') {
   g.beginPath()
   g.roundRect(0, 0, 800, 1125, 60)
   g.fill()
+  if (tier.id === 'king') {
+    // 홀로그램 띠 + 반짝이 (3D 무지개 반사와 겹쳐 보이게 은은하게)
+    g.save()
+    g.clip()
+    g.globalAlpha = 0.22
+    const holo = g.createLinearGradient(0, 0, 800, 1125)
+    ;['#ff7eb3', '#ffd36b', '#7dd3a8', '#6bc7ff', '#c49bff', '#ff7eb3', '#ffd36b', '#7dd3a8'].forEach((col, i, a) =>
+      holo.addColorStop(i / (a.length - 1), col),
+    )
+    g.fillStyle = holo
+    g.fillRect(0, 0, 800, 1125)
+    g.globalAlpha = 0.7
+    g.fillStyle = '#fff'
+    for (let i = 0; i < 70; i++) {
+      const x = (i * 263) % 800
+      const y = (i * 419) % 1125
+      g.fillRect(x, y, 3, 3)
+    }
+    g.restore()
+  }
   g.fillStyle = 'rgba(0,0,0,0.35)'
   g.beginPath()
   g.roundRect(330, 40, 140, 26, 13)
@@ -53,30 +75,30 @@ function faceTexture(tier: Tier, side: 'front' | 'back') {
   g.textBaseline = 'alphabetic'
   if (side === 'front') {
     g.fillStyle = m.sub
-    g.font = font(600, 34)
-    g.fillText('코드 타자 레이스 · 개발자 인증', 64, 150)
+    g.font = font(700, 38)
+    g.fillText('코드 타자 레이스 · 개발자 인증', 64, 160)
     g.fillStyle = m.ink
-    g.font = font(800, 84)
+    g.font = font(900, 112)
     const words = tier.name.split(' ')
-    g.fillText(words.slice(0, -1).join(' '), 64, 280)
-    g.fillText(words[words.length - 1], 64, 380)
-    g.font = font(700, 260, true)
-    g.fillText(String(tier.cpm), 52, 820)
+    g.fillText(words.slice(0, -1).join(' '), 60, 310)
+    g.fillText(words[words.length - 1], 60, 430)
+    g.font = font(800, 300, true)
+    g.fillText(String(tier.cpm), 44, 800)
     g.fillStyle = m.sub
-    g.font = font(600, 40)
-    g.fillText('타/분 · ' + tier.rank, 64, 890)
-    g.fillRect(64, 960, 672, 3)
-    g.font = font(500, 34, true)
+    g.font = font(700, 48)
+    g.fillText('타/분 · ' + tier.rank, 64, 880)
+    g.fillRect(64, 950, 672, 4)
+    g.font = font(600, 40, true)
     g.fillText(SAMPLE.player, 64, 1030)
     g.textAlign = 'right'
     g.fillText(SAMPLE.serial, 736, 1030)
   } else {
     g.fillStyle = m.sub
-    g.font = font(600, 36)
-    ;['코스', '정확도', '발급일'].forEach((t, i) => g.fillText(t, 64, 190 + i * 90))
+    g.font = font(600, 42)
+    ;['코스', '정확도', '발급일'].forEach((t, i) => g.fillText(t, 64, 210 + i * 110))
     g.fillStyle = m.ink
-    g.font = font(700, 40)
-    ;[SAMPLE.course, `${tier.acc}%`, SAMPLE.date].forEach((t, i) => g.fillText(t, 250, 190 + i * 90))
+    g.font = font(800, 48)
+    ;[SAMPLE.course, `${tier.acc}%`, SAMPLE.date].forEach((t, i) => g.fillText(t, 260, 210 + i * 110))
     for (let x = 64, i = 0; x < 736; i++) {
       const w = [4, 2, 6, 2, 3][i % 5]
       g.fillRect(x, 820, w, 140)
@@ -92,17 +114,17 @@ function faceTexture(tier: Tier, side: 'front' | 'back') {
   return tex
 }
 
+// 줄: 글씨는 눌려서 깨지니까 가장자리 줄무늬만
 function bandTexture() {
   const c = document.createElement('canvas')
-  c.width = 1024
+  c.width = 64
   c.height = 64
   const g = c.getContext('2d')!
-  g.fillStyle = '#1f3a2e'
-  g.fillRect(0, 0, 1024, 64)
+  g.fillStyle = '#17352a'
+  g.fillRect(0, 0, 64, 64)
   g.fillStyle = '#7dd3a8'
-  g.font = '700 30px -apple-system, "Apple SD Gothic Neo", sans-serif'
-  g.textBaseline = 'middle'
-  g.fillText('코드 타자 레이스  ·  CODE RACE  ·  코드 타자 레이스  ·  CODE RACE  ·', 12, 34)
+  g.fillRect(0, 4, 64, 6)
+  g.fillRect(0, 54, 64, 6)
   const tex = new THREE.CanvasTexture(c)
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.colorSpace = THREE.SRGBColorSpace
@@ -134,10 +156,10 @@ function Band({ tier, flipped, onFlip }: { tier: Tier; flipped: boolean; onFlip:
   const strap = useMemo(bandTexture, [])
   const m = MATERIAL[tier.id]
 
-  const segment = { type: 'dynamic' as const, canSleep: true, colliders: false as const, angularDamping: 2, linearDamping: 2 }
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1])
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1])
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1])
+  const segment = { type: 'dynamic' as const, canSleep: true, colliders: false as const, angularDamping: 4, linearDamping: 4 }
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], ROPE])
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], ROPE])
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], ROPE])
   useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.45, 0]])
 
   useEffect(() => {
@@ -180,6 +202,9 @@ function Band({ tier, flipped, onFlip }: { tier: Tier; flipped: boolean; onFlip:
   const mat = (map: THREE.Texture) => (
     <meshPhysicalMaterial
       map={map}
+      emissiveMap={map}
+      emissive="white"
+      emissiveIntensity={0.28}
       transparent
       alphaTest={0.5}
       side={THREE.FrontSide}
@@ -195,12 +220,13 @@ function Band({ tier, flipped, onFlip }: { tier: Tier; flipped: boolean; onFlip:
 
   return (
     <>
-      <group position={[0, 4, 0]}>
+      {/* 처음부터 세로로 매달린 채 살짝 옆으로 비껴서 시작 → 작게 한두 번 흔들리고 멈춤 */}
+      <group position={[0, 2.7, 0]}>
         <RigidBody ref={fixed} {...segment} type="fixed" />
-        <RigidBody position={[0.5, 0, 0]} ref={j1} {...segment}><BallCollider args={[0.1]} /></RigidBody>
-        <RigidBody position={[1, 0, 0]} ref={j2} {...segment}><BallCollider args={[0.1]} /></RigidBody>
-        <RigidBody position={[1.5, 0, 0]} ref={j3} {...segment}><BallCollider args={[0.1]} /></RigidBody>
-        <RigidBody position={[2, 0, 0]} ref={card} {...segment} type={dragged ? 'kinematicPosition' : 'dynamic'}>
+        <RigidBody position={[0.08, -ROPE, 0]} ref={j1} {...segment}><BallCollider args={[0.1]} /></RigidBody>
+        <RigidBody position={[0.16, -ROPE * 2, 0]} ref={j2} {...segment}><BallCollider args={[0.1]} /></RigidBody>
+        <RigidBody position={[0.24, -ROPE * 3, 0]} ref={j3} {...segment}><BallCollider args={[0.1]} /></RigidBody>
+        <RigidBody position={[0.3, -ROPE * 3 - 1.45, 0]} ref={card} {...segment} type={dragged ? 'kinematicPosition' : 'dynamic'}>
           <CuboidCollider args={[CARD_W / 2, CARD_H / 2, 0.01]} />
           <group
             position={[0, -0.05, 0]}
@@ -218,17 +244,24 @@ function Band({ tier, flipped, onFlip }: { tier: Tier; flipped: boolean; onFlip:
               if (!moved.current) onFlip()
             }}
           >
-            {/* 금속 집게 */}
-            <mesh position={[0, CARD_H / 2 + 0.12, 0]}>
-              <boxGeometry args={[0.32, 0.22, 0.06]} />
-              <meshStandardMaterial color="#d9dde3" metalness={1} roughness={0.25} />
+            {/* 금속 고리 + 집게 */}
+            <mesh position={[0, CARD_H / 2 + 0.33, 0]} rotation={[0, Math.PI / 2, 0]}>
+              <torusGeometry args={[0.09, 0.022, 12, 32]} />
+              <meshStandardMaterial color="#e6e9ee" metalness={1} roughness={0.2} />
             </mesh>
+            <RoundedBox args={[0.34, 0.24, 0.05]} radius={0.04} position={[0, CARD_H / 2 + 0.1, 0]}>
+              <meshStandardMaterial color="#d9dde3" metalness={1} roughness={0.22} />
+            </RoundedBox>
             <group ref={face}>
-              <mesh position={[0, 0, 0.006]}>
+              {/* 카드 두께 — 등급 색 테두리 */}
+              <RoundedBox args={[CARD_W - 0.01, CARD_H - 0.01, 0.01]} radius={0.06} smoothness={6}>
+                <meshStandardMaterial color={m.edge} metalness={m.metal} roughness={0.35} />
+              </RoundedBox>
+              <mesh position={[0, 0, 0.0055]}>
                 <planeGeometry args={[CARD_W, CARD_H]} />
                 {mat(front)}
               </mesh>
-              <mesh position={[0, 0, -0.006]} rotation={[0, Math.PI, 0]}>
+              <mesh position={[0, 0, -0.0055]} rotation={[0, Math.PI, 0]}>
                 <planeGeometry args={[CARD_W, CARD_H]} />
                 {mat(back)}
               </mesh>
@@ -244,8 +277,8 @@ function Band({ tier, flipped, onFlip }: { tier: Tier; flipped: boolean; onFlip:
           resolution={new THREE.Vector2(width, height)}
           useMap={1}
           map={strap}
-          repeat={new THREE.Vector2(-3, 1)}
-          lineWidth={1}
+          repeat={new THREE.Vector2(-6, 1)}
+          lineWidth={0.75}
         />
       </mesh>
     </>
@@ -256,7 +289,7 @@ export function Badge3D({ tier }: { tier: Tier }) {
   const [flipped, setFlipped] = useState(false)
   return (
     <div className="badge3d-stage">
-      <Canvas camera={{ position: [0, 0, 13], fov: 25 }}>
+      <Canvas camera={{ position: [0, 0, 8.4], fov: 28 }}>
         <ambientLight intensity={Math.PI} />
         <Physics interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>
           <Band tier={tier} flipped={flipped} onFlip={() => setFlipped((f) => !f)} />
