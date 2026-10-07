@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "code-race",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2025-09-01",
+  // 화면 파일은 Vite 빌드 결과를 Cloudflare 플러그인이 연결함. 대결 웹소켓만 워커가 먼저 받음
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/ws/*"]
+  },
+  "durable_objects": { "bindings": [{ "name": "ROOM", "class_name": "Room" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }]
+}

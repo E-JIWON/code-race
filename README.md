@@ -5,9 +5,9 @@
 **유명 프론트엔드 라이브러리의 실제 코드를 치면서 읽는 타자 게임**
 
 zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치면, 한글 해설과 「그래서 개발할 땐」 실무 팁이 따라와요.<br />
-친구에게 링크를 보내면 서버 없이 브라우저끼리 바로 대결해요.
+친구에게 초대 링크를 보내면 바로 실시간 대결이 돼요. 회사·학교 망에서도요.
 
-### [▶ 바로 해보기 — e-jiwon.github.io/code-race](https://e-jiwon.github.io/code-race/)
+### [▶ 바로 해보기 — code-race.bonchil-jinsang.workers.dev](https://code-race.bonchil-jinsang.workers.dev/)
 
 [![CI](https://github.com/E-JIWON/code-race/actions/workflows/ci.yml/badge.svg)](https://github.com/E-JIWON/code-race/actions/workflows/ci.yml)
 [![Deploy](https://github.com/E-JIWON/code-race/actions/workflows/deploy.yml/badge.svg)](https://github.com/E-JIWON/code-race/actions/workflows/deploy.yml)
@@ -15,7 +15,7 @@ zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치
 ![TypeScript](https://img.shields.io/badge/TypeScript-6%20strict-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 ![Playwright](https://img.shields.io/badge/E2E-Playwright%2027%EA%B0%9C-2ead33?logo=playwright&logoColor=white)
-![Backend](<https://img.shields.io/badge/%EB%B0%B1%EC%97%94%EB%93%9C-%EC%97%86%EC%9D%8C%20(P2P)-black>)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
 
 <img src="docs/demo-typing.gif" alt="zustand useShallow를 치는 모습 — 오타, 자동완성 제안, 한글 해설 주석" width="720" />
 
@@ -91,7 +91,8 @@ zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치
 3. 누구든 <kbd>Enter</kbd> → 모두 같은 함수로 3초 뒤 출발
 4. 진행 막대와 친구 커서가 실시간으로 움직이고, 다 치면 순위가 떠요
 
-게임 서버 없이 **WebRTC로 브라우저끼리 직접** 주고받아요. 처음 서로를 찾을 때만 공개 nostr 릴레이를 빌려 써요([trystero](https://github.com/dmotz/trystero)).
+각자 **같은 주소의 방 서버(Cloudflare Durable Object)에 웹소켓으로** 붙고, 방 서버는 같은 방 사람에게 메시지를 전달만 해요. 게임 상태는 각자 브라우저에 있어요.<br />
+일반 웹사이트와 같은 https(443) 길이라 회사·학교 망에서도 대부분 통해요. 대결 칸 아래에 「방 서버 연결됨」이 보이고, 끊기면 알아서 다시 붙어요.
 
 ## 코스
 
@@ -121,7 +122,7 @@ pnpm dev            # http://localhost:5173
 | `pnpm lint` / `pnpm format`    | oxlint / prettier                                                                                         |
 | `pnpm demo:gif`                | README의 GIF를 실제 플레이로 다시 찍기                                                                    |
 
-`main`에 푸시하면 GitHub Actions가 검사(CI)하고 GitHub Pages로 배포해요.
+`main`에 푸시하면 GitHub Actions가 검사(CI)하고 Cloudflare Workers로 배포해요(`pnpm deploy`로 직접 배포도 돼요). 예전 주소 `e-jiwon.github.io/code-race`는 새 주소로 넘겨줘요.
 
 ## 구조
 
@@ -131,12 +132,13 @@ src/
 ├─ features/
 │  ├─ typing/               입력 리듀서 · 키 처리 · 코드 파싱 · 자동완성 · 코드 화면
 │  ├─ course/               라이브러리·함수 데이터(커밋 고정) · 불러오기 · 코스 선택
-│  ├─ race/                 P2P 방 · 카운트다운 · 진행 공유 · 대결 패널
+│  ├─ race/                 웹소켓 방 연결 · 메시지 규격 · 카운트다운 · 대결 패널
 │  └─ result/               결과 그래프 · 통계 · 누적 기록 · 캐릭터 카드
-└─ shared/                  localStorage · fetch 캐시 · PNG 저장
+├─ shared/                  localStorage · fetch 캐시 · PNG 저장
+└─ worker/                  Cloudflare Worker · 방 Durable Object (메시지 전달만)
 e2e/                        Playwright (게임 22개 + 대결·연결 진단 5개)
 scripts/                    단위 검사 · 데모 GIF 생성
-.github/workflows/          CI · GitHub Pages 배포
+.github/workflows/          CI · Cloudflare 배포 · 예전 주소 넘김
 ```
 
 ```mermaid
@@ -148,21 +150,22 @@ flowchart LR
   R --> P["profile<br/>누적 기록 (localStorage)"]
   ST --> C["ResultCard<br/>등급 · 손가락 지도 · 육각형"]
   P --> C
-  R <-->|진행·출발 신호| RM["useRoom<br/>trystero WebRTC"]
-  RM <-->|P2P| F(("친구 브라우저"))
+  R <-->|진행·출발 신호| RM["useRoom<br/>웹소켓"]
+  RM <-->|wss /ws/방코드| DO["Room<br/>Durable Object"]
+  DO <-->|전달| F(("친구 브라우저"))
 ```
 
 ## 기술 결정
 
-| 결정                                            | 이유                                                                                                 |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| 코드를 **커밋 SHA로 고정**해서 실행 중에 불러옴 | 원본이 바뀌어도 해설 줄 번호가 안 어긋나요. 코드를 저장소에 복사하지 않아서 출처·라이선스도 깔끔해요 |
-| **입력창 없이** `window keydown`                | 글자 하나하나에 상태(맞음·오타·자동완성·고스트·친구 커서)를 그려야 해서 `<input>` 대신 직접 그려요   |
-| 입력 상태는 **리듀서 하나**                     | 키 하나가 커서·오타·자동완성·기록을 동시에 바꿔서, 순수 함수로 모아야 테스트하기 쉬워요              |
-| 대결은 **P2P (trystero)**                       | 서버·DB 없이 정적 호스팅만으로 실시간 대결. 접속 확인된 릴레이 6곳으로 고정                          |
-| 이미지 저장은 **html-to-image**                 | 카드를 화면 그대로 PNG로. SVG 색은 CSS 클래스 대신 `fill` 속성으로 칠해요(클래스 색이 저장 때 빠짐)  |
-| 기능별 폴더 + 배럴 파일 없음                    | 작은 앱이라 `features/*`만으로 충분하고, 불필요한 간접 참조를 피했어요                               |
-| 결과 카드는 **컨테이너 쿼리**                   | 화면 폭이 아니라 카드 폭 기준으로 키보드를 줄여야 두 창이 나란히 좁아질 때도 안 잘려요               |
+| 결정                                            | 이유                                                                                                                                                                                    |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 코드를 **커밋 SHA로 고정**해서 실행 중에 불러옴 | 원본이 바뀌어도 해설 줄 번호가 안 어긋나요. 코드를 저장소에 복사하지 않아서 출처·라이선스도 깔끔해요                                                                                    |
+| **입력창 없이** `window keydown`                | 글자 하나하나에 상태(맞음·오타·자동완성·고스트·친구 커서)를 그려야 해서 `<input>` 대신 직접 그려요                                                                                      |
+| 입력 상태는 **리듀서 하나**                     | 키 하나가 커서·오타·자동완성·기록을 동시에 바꿔서, 순수 함수로 모아야 테스트하기 쉬워요                                                                                                 |
+| 대결은 **Durable Object 웹소켓 방**             | 처음엔 서버 없는 P2P(WebRTC)였는데 회사망 방화벽에 막혀서 바꿨어요. 방 하나 = 객체 하나, 전달만 하고 하이버네이션이라 쉴 땐 비용 0. 개발 서버에서도 로컬로 같이 떠서 E2E가 안정적이에요 |
+| 이미지 저장은 **html-to-image**                 | 카드를 화면 그대로 PNG로. SVG 색은 CSS 클래스 대신 `fill` 속성으로 칠해요(클래스 색이 저장 때 빠짐)                                                                                     |
+| 기능별 폴더 + 배럴 파일 없음                    | 작은 앱이라 `features/*`만으로 충분하고, 불필요한 간접 참조를 피했어요                                                                                                                  |
+| 결과 카드는 **컨테이너 쿼리**                   | 화면 폭이 아니라 카드 폭 기준으로 키보드를 줄여야 두 창이 나란히 좁아질 때도 안 잘려요                                                                                                  |
 
 <details>
 <summary><b>구현 메모 더 보기</b></summary>
@@ -170,7 +173,7 @@ flowchart LR
 - **주석 처리**: 줄 단위 스캐너가 문자열·템플릿 리터럴을 피해서 `//`, `/* */`, docstring을 찾아 원본 주석을 빼고, 한글 해설을 같은 들여쓰기로 끼워 넣어요. 긴 에러 메시지 덩어리는 `… (생략)`으로 접어요.
 - **자동완성 덮어쓰기**: 한 번에 건너뛴 닫는 글자들(`])` 등)을 순서대로 기억해서, 그중 어느 것을 습관적으로 쳐도 그 지점까지는 오타로 안 쳐요.
 - **등급·상위 %**: 공개된 코드 타자 분포가 없어서, 문장 타자 연구(평균 52WPM, [Dhakal et al. CHI 2018](https://userinterfaces.aalto.fi/136Mkeystrokes/))에 코드 보정 0.7을 곱한 정규분포(평균 182타, 표준편차 70)로 추정해요.
-- **개발 모드 대결**: StrictMode가 effect를 join→leave→join 해도 같은 방을 이어 쓰도록 나가기를 잠깐 미뤄요.
+- **개발 모드 대결**: StrictMode가 effect를 두 번 돌려 웹소켓을 열자마자 닫으면 서버에 유령 참가자가 남아서, 소켓을 한 박자 늦게 열고 서버는 인사한 사람만 참가자로 보여줘요.
 - **데모 GIF**: `scripts/demo-gif.ts`가 Playwright로 실제 플레이를 찍어 gifenc로 묶어요(ffmpeg 불필요).
 
 </details>
@@ -185,14 +188,14 @@ flowchart LR
 | E2E       | Playwright 27개 (시스템 Chrome)         | 완주, 오타, 한글 입력, Esc/Tab, 자동완성, 카드 저장 4종, 저장소 유지, 375·760px, 키보드만으로 조작, 두 브라우저 대결 |
 | 정적 검사 | TypeScript strict · oxlint · prettier   | CI에서 매 푸시마다                                                                                                   |
 
-**Lighthouse** (프로덕션 빌드)
+**Lighthouse** (실제 배포 주소 기준)
 
-|          | 성능 | 접근성 | 권장사항 | SEO |
-| -------- | ---- | ------ | -------- | --- |
-| 모바일   | 97   | 100    | 100      | 91  |
-| 데스크톱 | 100  | 100    | 100      | 91  |
+|          | 성능  | 접근성 | 권장사항 | SEO |
+| -------- | ----- | ------ | -------- | --- |
+| 모바일   | 75–87 | 100    | 100      | 100 |
+| 데스크톱 | 86    | 100    | 100      | 100 |
 
-SEO는 `robots.txt`만 빠져서 91이에요. GitHub Pages 하위 경로(`/code-race/`)에선 크롤러가 도메인 루트의 `robots.txt`만 읽어서 넣어도 의미가 없어요.
+모바일 성능은 느린 회선을 흉내 내서 측정마다 흔들려요. 로컬(네트워크 지연 0)에선 97 / 100이에요. 해시 붙은 JS·CSS는 1년 캐시, 문제 코드를 받아오는 `raw.githubusercontent.com`엔 미리 연결(preconnect)해 둬요.
 
 **UI QA** — 375 · 768 · 1280px에서 처음 화면 · 치는 중 · 결과 · 대결 방을 점검했어요. 콘솔 오류 0, 실패한 요청 0, 가로 넘침 0. 이때 고친 것들이에요.
 
@@ -205,32 +208,35 @@ SEO는 `robots.txt`만 빠져서 91이에요. GitHub Pages 하위 경로(`/code-
 
 | 버그                                                            | 원인 · 수정                                                 |
 | --------------------------------------------------------------- | ----------------------------------------------------------- |
-| 개발 서버에서 대결 방이 서로 안 보임                            | StrictMode join→leave→join → 나가기를 늦추고 같은 방 재사용 |
+| 개발 서버에서 대결 방이 서로 안 보임 (P2P 시절)                 | StrictMode join→leave→join → 나가기를 늦추고 같은 방 재사용 |
 | 대결 시작 후 이름 칸에 포커스가 남은 친구는 키가 안 먹음        | 출발 신호에서 포커스 해제                                   |
 | 자동완성으로 `))`를 한 번에 건너뛴 뒤 둘 다 치면 두 번째가 오타 | 건너뛴 글자를 하나가 아니라 줄로 기억                       |
 | 휴대폰·좁은 두 창에서 결과 카드 키보드 오른쪽이 잘림            | 컨테이너 쿼리로 카드 폭 기준 축소                           |
 | 불러오기 실패 후 「다시 시도」가 엉뚱한 함수를 부름             | 요청한 함수를 기억                                          |
-| 대결마다 죽은 nostr 릴레이 연결 오류가 콘솔에 남음              | 접속 확인된 릴레이로 고정                                   |
+| 방에 들어오자마자 이름을 바꾸면 친구 화면에 예전 이름이 남음    | 방 서버의 메시지 간격 제한에서 이름·출발·완주 신호는 제외   |
+| 개발 모드에서 이름 없는 유령 참가자가 생김                      | 소켓을 한 박자 늦게 열고, 서버는 인사한 사람만 참가자로     |
 
 ## 버전 기록
 
-| 버전   | 내용                                                                   |
-| ------ | ---------------------------------------------------------------------- |
-| v1.1.0 | 등급 7단계(응애 개발자 ~ 킹갓제너럴), 좁은 폭 결과 카드 잘림 수정      |
-| v1.0.0 | README · 데모 GIF, 첫 공개 버전                                        |
-| v0.8.0 | 기능별 폴더 구조, Playwright E2E, 버그 5개 수정                        |
-| v0.7.0 | 결과 화면 캐릭터 카드 (누적 기록 · 손가락 지도 · 능력치 · 이미지 저장) |
-| v0.6.0 | Monkeytype식 결과 그래프 · 원시 타수 · 일관성                          |
-| v0.5.0 | 사용 흐름 순서 코스 + 「그래서 개발할 땐」 실무 팁                     |
-| v0.4.0 | VS Code식 자동완성                                                     |
-| v0.3.0 | 프론트 라이브러리 코스 + 한글 해설 주석                                |
-| v0.2.0 | 친구랑 실시간 대결                                                     |
-| v0.1.0 | 첫 버전                                                                |
+| 버전   | 내용                                                                            |
+| ------ | ------------------------------------------------------------------------------- |
+| v1.3.0 | 대결을 Cloudflare Durable Object 웹소켓으로 전환 (회사망 대응), Cloudflare 배포 |
+| v1.2.0 | 접근성(키보드 조작·대비), README 상세화                                         |
+| v1.1.0 | 등급 7단계(응애 개발자 ~ 킹갓제너럴), 좁은 폭 결과 카드 잘림 수정               |
+| v1.0.0 | README · 데모 GIF, 첫 공개 버전                                                 |
+| v0.8.0 | 기능별 폴더 구조, Playwright E2E, 버그 5개 수정                                 |
+| v0.7.0 | 결과 화면 캐릭터 카드 (누적 기록 · 손가락 지도 · 능력치 · 이미지 저장)          |
+| v0.6.0 | Monkeytype식 결과 그래프 · 원시 타수 · 일관성                                   |
+| v0.5.0 | 사용 흐름 순서 코스 + 「그래서 개발할 땐」 실무 팁                              |
+| v0.4.0 | VS Code식 자동완성                                                              |
+| v0.3.0 | 프론트 라이브러리 코스 + 한글 해설 주석                                         |
+| v0.2.0 | 친구랑 실시간 대결                                                              |
+| v0.1.0 | 첫 버전                                                                         |
 
 ## 한계와 다음 할 일
 
 - 기록은 각자 브라우저(localStorage)에만 저장돼요. 랭킹은 없어요.
-- 대결은 공개 릴레이와 WebRTC에 기대요. 회사·학교 망처럼 막힌 네트워크에선 연결이 안 될 수 있어요. 대결 칸 아래 「연결 서버 n/6」 진단이 어디서 막혔는지(서로 찾기 / 직접 연결) 알려주고, 휴대폰 핫스팟 같은 다른 망을 안내해요.
+- 아주 엄격한 망(허용된 사이트만 열리는 망분리)에선 `workers.dev` 주소 자체가 막힐 수 있어요. 그땐 휴대폰 핫스팟을 써야 해요.
 - 등급 경계와 상위 %는 추정값이라, 실제 플레이 데이터가 쌓이면 보정이 필요해요.
 - 물리 키보드 전용이에요. 휴대폰에서는 결과·카드만 보기 좋게 맞췄어요.
 - 다음: 코스 늘리기(Vue · Svelte · React Hook Form), 공유 링크 미리보기(OG 이미지)

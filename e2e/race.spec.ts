@@ -1,7 +1,7 @@
 import type { Browser, Page } from '@playwright/test'
 import { test, expect, gotoReady, typeCorrect } from './helpers'
 
-// 네트워크 의존: trystero가 공개 nostr 릴레이로 WebRTC 연결을 주선함. 릴레이 상태에 따라 실패할 수 있음
+// 방 서버(Durable Object)는 Cloudflare Vite 플러그인이 개발·미리보기 서버에서 로컬로 같이 띄움
 const PROD = 'http://localhost:5198/'
 const DEV = 'http://localhost:5199/'
 
@@ -43,11 +43,10 @@ const barOf = (p: Page, who: string) =>
     .locator('.bar > span')
     .evaluate((el) => parseFloat((el as HTMLElement).style.width))
 
-test.describe('친구랑 대결 (네트워크 의존)', () => {
+test.describe('친구랑 대결', () => {
   test.setTimeout(180_000)
 
   test('두 브라우저 연결 → 동시 카운트다운 → 진행 공유', async ({ browser }) => {
-    test.info().annotations.push({ type: 'network', description: 'public nostr relays + WebRTC, production build' })
     const { a, b, close } = await twoPlayers(browser, PROD)
     try {
       await expect(a.locator('.players')).toContainText('비', { timeout: 15_000 })
@@ -107,16 +106,15 @@ test.describe('친구랑 대결 (네트워크 의존)', () => {
   })
 })
 
-test.describe('연결 진단', () => {
-  test('릴레이에 붙으면 연결 서버 수가 보임', async ({ page }) => {
+test.describe('연결 상태', () => {
+  test('방 서버에 붙으면 연결됨이 보임', async ({ page }) => {
     await page.goto('/?room=diag-ok-' + Date.now())
-    await expect(page.locator('.net')).toContainText(/연결 서버 [1-9]\/6/, { timeout: 15_000 })
+    await expect(page.locator('.net')).toHaveText('방 서버 연결됨', { timeout: 15_000 })
   })
 
-  test('업무망처럼 릴레이가 막히면 원인과 해결 방법을 안내함', async ({ page }) => {
-    await page.routeWebSocket(/.*/, (ws) => ws.close()) // 모든 웹소켓 차단
+  test('웹소켓이 막히면 다시 시도하면서 다른 망을 안내함', async ({ page }) => {
+    await page.routeWebSocket(/\/ws\//, (ws) => ws.close()) // 방 서버 웹소켓만 차단
     await page.goto('/?room=diag-blocked-' + Date.now())
     await expect(page.locator('.net.bad')).toContainText('핫스팟', { timeout: 15_000 })
-    await expect(page.locator('.net')).toContainText('연결 서버 0/6')
   })
 })

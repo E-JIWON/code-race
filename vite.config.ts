@@ -1,8 +1,8 @@
+import { cloudflare } from '@cloudflare/vite-plugin'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// GitHub Pages는 /code-race/ 아래에서 서빙되므로 배포 빌드에서만 BASE_PATH로 경로를 바꿈
+// cloudflare(): 개발·미리보기에서도 방 서버(Durable Object)를 로컬로 같이 띄움
 export default defineConfig({
-  base: process.env.BASE_PATH ?? '/',
-  plugins: [react()],
+  plugins: [react(), cloudflare()],
 })
