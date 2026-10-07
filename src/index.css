@@ -4,7 +4,7 @@
   --line: #262a33;
   --ink: #e6e8ee;
   --ink-2: #a3a9b6;
-  --ink-3: #5c6370;
+  --ink-3: #7d8492;
   --accent: #7dd3a8;
   --danger: #ff6b6b;
   --ghost: #b39dff;
@@ -119,6 +119,7 @@ button:disabled {
   color: var(--ink-2);
   font: 13px var(--mono);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 .about a:hover {
   color: var(--ink);
@@ -176,7 +177,6 @@ button:disabled {
   padding-right: 1em;
   text-align: right;
   color: var(--ink-3);
-  opacity: 0.6;
   user-select: none;
 }
 

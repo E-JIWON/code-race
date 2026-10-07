@@ -11,10 +11,26 @@ type Handlers = {
 export function useGameKeys({ onTab, onEscape, onEnter, onChar }: Handlers) {
   const [imeWarn, setImeWarn] = useState(false)
 
+  // 마우스로 누른 버튼은 포커스를 풀어, 클릭 직후에도 바로 칠 수 있게 (버튼 포커스는 키보드로 온 경우만 남음)
+  useEffect(() => {
+    const release = () => {
+      if (document.activeElement instanceof HTMLButtonElement) document.activeElement.blur()
+    }
+    window.addEventListener('pointerup', release)
+    return () => window.removeEventListener('pointerup', release)
+  }, [])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
+      // 키보드 사용자 길: Shift+Tab으로 버튼에 나가고, 버튼 위에선 키를 기본 동작대로, Esc로 게임 복귀
+      const focused = document.activeElement
+      if (focused instanceof HTMLButtonElement || focused instanceof HTMLAnchorElement) {
+        if (e.key === 'Escape') focused.blur()
+        return
+      }
+      if (e.key === 'Tab' && e.shiftKey) return
       if (e.key === 'Tab') {
         e.preventDefault()
         onTab()

@@ -155,7 +155,8 @@ export default function App() {
             )
           ) : (
             <>
-              그냥 치면 시작돼요 · 한글 주석·들여쓰기는 자동 · <kbd>Tab</kbd> 다음 함수 · <kbd>Esc</kbd> 처음부터
+              그냥 치면 시작돼요 · 한글 주석·들여쓰기는 자동 · <kbd>Tab</kbd> 다음 함수 · <kbd>Esc</kbd> 처음부터 ·{' '}
+              <kbd>Shift+Tab</kbd> 버튼으로
             </>
           )}
         </p>

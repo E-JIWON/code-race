@@ -352,3 +352,35 @@ test('회귀: 불러오기 실패 → 다시 시도가 실패한 함수를 다�
   // 실패한 Jotai가 아니라 원래 보던 함수로 돌아감 → 사용자가 고른 걸 다시 시도해야 자연스러움
   await expect(page.locator('.libs button.on')).toHaveText('Jotai')
 })
+
+test('키보드만으로: Shift+Tab으로 버튼에 가고, Tab으로 이동, Esc로 게임 복귀', async ({ page }) => {
+  await open(page, 'redux-compose')
+  const focusedTag = () => page.evaluate(() => document.activeElement?.tagName)
+  await page.keyboard.press('Shift+Tab')
+  expect(['BUTTON', 'A']).toContain(await focusedTag())
+  const first = await page.evaluate(() => document.activeElement?.textContent)
+  await page.keyboard.press('Tab')
+  expect(await page.evaluate(() => document.activeElement?.textContent)).not.toBe(first) // 포커스가 실제로 움직임
+  await expect(page.locator('.code .done')).toHaveCount(0) // 버튼 위에서 친 키는 게임에 안 들어감
+  await page.keyboard.press('Escape')
+  expect(await focusedTag()).toBe('BODY')
+  await press(page, (await curChar(page))!)
+  await expect(page.locator('.code .done')).not.toHaveCount(0)
+})
+
+test('375px에서 치는 동안 커서가 화면 밖으로 나가지 않음', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 700 })
+  await open(page, 'redux-compose')
+  let outside = 0
+  for (let i = 0; i < 160; i++) {
+    const ch = await curChar(page)
+    if (ch === null) break
+    await press(page, ch)
+    outside += await page.evaluate(() => {
+      const r = document.querySelector('.code .cur')?.getBoundingClientRect()
+      const box = document.querySelector('.code')!.getBoundingClientRect()
+      return r && (r.right > Math.min(box.right, innerWidth) + 1 || r.bottom > innerHeight + 1) ? 1 : 0
+    })
+  }
+  expect(outside).toBe(0)
+})

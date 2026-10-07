@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { Char, Line } from './engine'
 
 type Props = {
@@ -13,12 +14,17 @@ type Props = {
 }
 
 export function CodeView({ lines, chars, pos, wrong, ghostPos, peers, dim, filled, hint }: Props) {
+  const ref = useRef<HTMLDivElement>(null)
+  // 좁은 화면·긴 함수에서 커서가 화면 밖으로 나가지 않게 따라감
+  useEffect(() => {
+    ref.current?.querySelector('.cur')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [pos])
   const peerAt = new Map(peers.map((p) => [p.pos, p.color]))
   const byLine: [Char, number][][] = lines.map(() => [])
   chars.forEach((c, i) => byLine[c.line].push([c, i]))
 
   return (
-    <div className={`code ${dim ? 'fade' : ''}`}>
+    <div ref={ref} className={`code ${dim ? 'fade' : ''}`}>
       {lines.map((line, li) => (
         <div key={li} className="ln">
           <span className="no">{line.no ?? ''}</span>
