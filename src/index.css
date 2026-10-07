@@ -355,9 +355,19 @@ h2 {
 
 .room {
   margin-top: 16px;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border: 1px solid var(--line);
   border-radius: 12px;
+}
+.room.racing {
+  padding: 10px 18px;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+.room-racing {
+  margin: 0;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
 }
 .room-bar {
   display: flex;
@@ -382,65 +392,129 @@ h2 {
   font: inherit;
   font-size: 14px;
 }
-.room-bar .primary,
-.room-bar .count {
+.room-bar .primary {
   margin-left: auto;
 }
 .primary {
   border-color: var(--accent);
   color: var(--accent);
 }
-.count {
-  font: 600 24px var(--mono);
-  color: var(--accent);
-  width: 2ch;
-  text-align: center;
-}
 
+/* 레이스 트랙 — 코드 바로 위에 붙어서 스크롤해도 따라옴 */
 .players {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: grid;
-  gap: 8px;
+  gap: 2px;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  list-style: none;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  backdrop-filter: blur(6px);
+}
+.players + .code-wrap .code {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 .players li {
   display: grid;
-  grid-template-columns: 2.5em 10px 8em 1fr 4.5em;
+  grid-template-columns: 5.2em 7.5em 1fr 4.2em;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  height: 30px;
+  font-size: 13px;
+}
+.players li.me .pname {
+  color: var(--ink);
+  font-weight: 700;
 }
 .rank {
-  color: var(--accent);
+  color: var(--ink);
   font-size: 12px;
-}
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .pname {
   overflow: hidden;
+  color: var(--ink-2);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 트랙 = 점선 차선 + 지나온 길 + 맨 앞의 말 + 결승선 */
 .bar {
-  height: 6px;
-  background: var(--line);
-  border-radius: 3px;
-  overflow: hidden;
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 14px);
+}
+.bar::after {
+  content: '🏁';
+  position: absolute;
+  top: 50%;
+  right: -6px;
+  font-size: 14px;
+  transform: translateY(-55%);
 }
 .bar span {
+  position: relative;
   display: block;
+  min-width: 2px;
   height: 100%;
-  border-radius: 3px;
-  transition: width 0.15s;
+  border-radius: 4px;
+  transition: width 0.18s ease-out;
+}
+.bar span::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -9px;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c) 70%, transparent);
+  transform: translateY(-50%);
 }
 .pcpm {
-  text-align: right;
   color: var(--ink-2);
   font: 13px var(--mono);
+  text-align: right;
+}
+
+/* 카운트다운 — 코드 한가운데 큰 숫자 */
+.code-wrap {
+  position: relative;
+}
+.countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: start center;
+  padding-top: 90px; /* 코드가 길어도 첫 줄 근처에 뜨게 */
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  pointer-events: none;
+}
+.countdown .count {
+  color: var(--accent);
+  font: 900 140px/1 var(--mono);
+  text-shadow: 0 0 40px color-mix(in srgb, var(--accent) 50%, transparent);
+  animation: count-pop 1s ease-out;
+}
+@keyframes count-pop {
+  from {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .sub-stats {
@@ -497,4 +571,12 @@ h2 {
 }
 .net.bad {
   color: var(--danger);
+}
+
+@media (max-width: 480px) {
+  .players li {
+    grid-template-columns: 3.6em 5em 1fr 3.6em;
+    gap: 8px;
+    font-size: 12px;
+  }
 }

@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "demo:gif": "node scripts/demo-gif.ts",
     "deploy": "pnpm build && wrangler deploy",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "og": "node scripts/og-image.ts"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",

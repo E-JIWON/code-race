@@ -95,7 +95,9 @@ export function useRace({ s, dispatch, load, onError, progress }: Options) {
     room.sendProgress({ race: raceId, pos: s.pos, ...progress })
   }, [s.pos, finished]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => store.set('name', name), [name])
+  useEffect(() => {
+    store.set('name', name)
+  }, [name])
 
   return {
     roomId,

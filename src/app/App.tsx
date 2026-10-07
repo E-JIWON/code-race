@@ -3,7 +3,7 @@ import { store } from '../shared/storage'
 import { CoursePicker } from '../features/course/CoursePicker'
 import { ALL, findSnippet, nextSnippet } from '../features/course/snippets'
 import { useRoundLoader } from '../features/course/useRoundLoader'
-import { RacePanel } from '../features/race/RacePanel'
+import { RacePanel, RaceTrack, racersOf } from '../features/race/RacePanel'
 import { useRace } from '../features/race/useRace'
 import { peerColor } from '../features/race/useRoom'
 import { ResultPanel } from '../features/result/ResultPanel'
@@ -28,7 +28,9 @@ export default function App() {
 
   const retry = () => s.round && show(s.round.snippet)
 
-  useEffect(() => show(findSnippet(store.get<string>('last') ?? '') ?? ALL[0]), []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    show(findSnippet(store.get<string>('last') ?? '') ?? ALL[0])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const imeWarn = useGameKeys({
     onTab: () => {
@@ -42,7 +44,9 @@ export default function App() {
     onChar: (ch) => dispatch({ type: 'key', ch, at: performance.now(), assist }),
   })
 
-  useEffect(() => store.set('assist', assist), [assist])
+  useEffect(() => {
+    store.set('assist', assist)
+  }, [assist])
 
   if (error) {
     return (
@@ -81,12 +85,9 @@ export default function App() {
         <RacePanel
           name={race.name}
           onNameChange={race.setName}
-          me={{ pos: s.pos, cpm: liveCpm, done: finished ? elapsed : null }}
-          peers={race.peers}
+          alone={Object.keys(race.peers).length === 0}
           net={race.net}
-          raceId={race.raceId}
-          chars={chars}
-          count={race.count}
+          racing={race.count !== null || (!!race.raceId && !s.locked && !finished)}
           canStart={canStart}
           finished={finished}
           copied={race.copied}
@@ -117,17 +118,40 @@ export default function App() {
         </button>
       </div>
 
-      <CodeView
-        lines={lines}
-        chars={chars}
-        pos={s.pos}
-        wrong={s.wrong}
-        ghostPos={ghostPos}
-        peers={racers.map(([id, p]) => ({ pos: p.pos ?? 0, color: peerColor(id) }))}
-        dim={loading || s.locked}
-        filled={s.filled}
-        hint={hint}
-      />
+      {/* 트랙은 코드 상자 안에서만 따라붙음 — 결과로 내려가면 같이 사라짐 */}
+      <div>
+        {roomId && (
+          <RaceTrack
+            racers={racersOf(
+              { name: race.name, pos: s.pos, cpm: liveCpm, done: finished ? elapsed : null },
+              race.peers,
+              race.raceId,
+            )}
+            chars={chars}
+          />
+        )}
+
+        <div className="code-wrap">
+          {race.count !== null && (
+            <div className="countdown">
+              <span key={race.count} className="count">
+                {race.count}
+              </span>
+            </div>
+          )}
+          <CodeView
+            lines={lines}
+            chars={chars}
+            pos={s.pos}
+            wrong={s.wrong}
+            ghostPos={ghostPos}
+            peers={racers.map(([id, p]) => ({ pos: p.pos ?? 0, color: peerColor(id) }))}
+            dim={loading || s.locked}
+            filled={s.filled}
+            hint={hint}
+          />
+        </div>
+      </div>
 
       {imeWarn && <p className="warn">한글 입력 중이에요. 한/영 키를 눌러 영어로 바꿔 주세요.</p>}
 

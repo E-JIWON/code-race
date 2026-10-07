@@ -73,7 +73,9 @@ export function useRoom(roomId: string | null, name: string, onStart: (s: Start)
     }
   }, [roomId])
 
-  useEffect(() => send({ t: 'hello', name }), [name])
+  useEffect(() => {
+    send({ t: 'hello', name })
+  }, [name])
 
   return {
     peers,

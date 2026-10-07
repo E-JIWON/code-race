@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { downloadPng } from '../../shared/downloadPng'
 import type { Snippet } from '../course/snippets'
 import type { TypingState } from '../typing/typingReducer'
@@ -39,6 +39,10 @@ export function ResultPanel({
   onNext,
 }: Props) {
   const resultRef = useRef<HTMLElement>(null)
+  // 다 치는 순간 결과가 화면 아래에 생겨서 못 보고 지나치지 않게 결과로 내려감
+  useEffect(() => {
+    resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
   const graph = perSecond(s.keys, elapsed)
   const weak = Object.entries(s.misses)
     .sort((a, b) => b[1] - a[1])

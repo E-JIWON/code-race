@@ -94,7 +94,7 @@ test.describe('친구랑 대결', () => {
       const ch = await b.evaluate(() => document.querySelector('.code .cur')!.firstChild!.textContent!)
       await b.keyboard.type(ch) // 사용자는 코드 상자를 보고 바로 침
       await expect(b.locator('.code .done')).not.toHaveCount(0, { timeout: 2000 })
-      await expect(b.locator('.room input')).toHaveValue('비')
+      await expect(b.locator('.players li.me .pname')).toHaveText('비 (나)') // 대결 중엔 이름 칸이 숨고, 친 글자가 이름에 안 섞임
     } finally {
       await close()
     }
