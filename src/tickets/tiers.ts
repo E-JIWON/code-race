@@ -17,17 +17,13 @@ export const SAMPLE = {
   serial: 'No. 0427',
 }
 
-// 여러 판을 모은 프로필 (결산·유형 카드용 샘플)
+// 여러 판을 모은 프로필 (유형·터미널·RPG 카드용 샘플)
 export const PROFILE = {
   plays: 37,
   minutes: 52,
   consistency: 81,
   assist: true,
-  nightOwl: true, // 밤 11시 이후 판이 절반 넘음
   weakKey: ')',
-  weakCount: 6,
-  topKey: ';',
-  topKeyCount: 412,
   libs: [
     { name: 'zustand', plays: 14 },
     { name: 'TanStack Query', plays: 9 },
@@ -36,25 +32,34 @@ export const PROFILE = {
     { name: 'Jotai', plays: 3 },
     { name: '작은 명품 유틸', plays: 1 },
   ],
-  runs: [
-    { title: 'createStore', cpm: 268, errors: 2 },
-    { title: 'useShallow', cpm: 301, errors: 0 },
-    { title: 'hashKey', cpm: 244, errors: 3 },
-    { title: 'replaceEqualDeep', cpm: 212, errors: 6 },
-    { title: 'shallowEqual', cpm: 287, errors: 1 },
-    { title: 'combineReducers', cpm: 231, errors: 4 },
-  ],
 }
 
-// 약한 기호 → 별명 (당근 연말결산식)
-export const NICKNAMES: Record<string, [string, string]> = {
-  ')': ['괄호 미아', '닫는 괄호를 자꾸 잃어버려요'],
-  ';': ['세미콜론 실종자', '문장 끝이 늘 아슬아슬해요'],
-  '>': ['화살표 공포증', '=> 앞에서 손이 멈춰요'],
-  '{': ['중괄호 망설임', '블록을 열기 전에 한숨부터 쉬어요'],
-  '.': ['체이닝 과속', '점을 너무 빨리 찍어요'],
-  '\n': ['엔터 신중론자', '줄바꿈 전에 한 번 더 생각해요'],
+// 키별 오타율(%) — 키보드 지도용
+export const KEY_MISS: Record<string, number> = {
+  ')': 9, '(': 4, '{': 6, '}': 5, '[': 3, ']': 3, ';': 2, ':': 4, "'": 5, '"': 3, '=': 4, '>': 7, '<': 3,
+  '.': 1, ',': 2, '/': 2, '-': 1, '_': 6, '!': 3, '?': 4, '&': 5, '|': 6, '$': 2, '`': 8,
+  q: 1, w: 0, e: 1, r: 1, t: 0, y: 1, u: 0, i: 0, o: 1, p: 2,
+  a: 0, s: 1, d: 0, f: 0, g: 1, h: 0, j: 0, k: 1, l: 1,
+  z: 3, x: 2, c: 0, v: 1, b: 2, n: 0, m: 1,
 }
+
+// 최근 20주 하루 판 수 — 타자 잔디용 (샘플: 주말·최근에 더 많이)
+export const DAILY = Array.from({ length: 140 }, (_, i) => {
+  const noise = (Math.sin(i * 12.9898) * 43758.5453) % 1 // 고정된 가짜 난수 (-1~1)
+  const busy = (i > 100 ? 0.35 : 0) + (i % 7 >= 5 ? 0.2 : 0)
+  const v = Math.abs(noise) * 0.8 + busy
+  return v < 0.4 ? 0 : Math.round((v - 0.3) * 8)
+})
+
+// RPG 능력치 (0~100)
+export const STATS = [
+  { key: '속도', value: 78 },
+  { key: '정확', value: 91 },
+  { key: '리듬', value: 81 },
+  { key: '기호', value: 54 },
+  { key: '끈기', value: 66 },
+  { key: '야행성', value: 88 },
+]
 
 // 개발자 유형 (MBTI식 4축). 앞 두 글자 = 칭호, 뒤 두 글자 = 부제
 export const AXES = [

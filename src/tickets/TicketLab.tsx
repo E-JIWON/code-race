@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { Lineup, NicknameSticker, Receipt, Story, TypeCard } from './Cards'
+import { Grass, KeyMap, Neofetch, RpgStats, TypeCard } from './Cards'
 import { TIERS } from './tiers'
 import './tickets.css'
 
@@ -9,10 +9,10 @@ const Badge3D = lazy(() => import('./Badge3D').then((m) => ({ default: m.Badge3D
 const VARIANTS = [
   { id: 'badge3d', name: '3D 명찰', View: Badge3D },
   { id: 'type', name: '개발자 유형', View: TypeCard },
-  { id: 'nickname', name: '별명 스티커', View: NicknameSticker },
-  { id: 'receipt', name: '영수증', View: Receipt },
-  { id: 'lineup', name: '라인업 포스터', View: Lineup },
-  { id: 'story', name: '결산 스토리', View: Story },
+  { id: 'keymap', name: '키보드 지도', View: KeyMap },
+  { id: 'neofetch', name: '터미널', View: Neofetch },
+  { id: 'rpg', name: 'RPG 능력치', View: RpgStats },
+  { id: 'grass', name: '타자 잔디', View: Grass },
 ]
 
 // 카드 시안 랩 — ?lab 으로 열림 (?lab=receipt 처럼 탭 바로 열기)

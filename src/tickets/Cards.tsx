@@ -1,7 +1,7 @@
-// 결산·유형 카드 시안 5종 (연말결산·MBTI·Receiptify·Instafest·Wrapped 분석)
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+// 카드 시안: 개발자 유형(채택 후보) + 개발자만 알아보는 형식 4종
+import { useRef, type ReactNode } from 'react'
 import { toPng } from 'html-to-image'
-import { AXES, NICKNAMES, PROFILE, SAMPLE, TYPE_SUB, TYPE_TITLE, type Tier } from './tiers'
+import { AXES, DAILY, KEY_MISS, PROFILE, SAMPLE, STATS, TYPE_SUB, TYPE_TITLE, type Tier, type TierId } from './tiers'
 import { useTilt } from './useTilt'
 
 // 카드 하나 + 이미지 저장 버튼 (다섯 시안이 같이 씀)
@@ -67,124 +67,171 @@ export function TypeCard({ tier }: { tier: Tier }) {
   )
 }
 
-// ───── 2. 별명 스티커 (당근 연말결산식) ─────
-function scallop(r: number, bumps: number, depth: number) {
-  const pts = []
-  for (let i = 0; i <= bumps * 8; i++) {
-    const a = (i / (bumps * 8)) * Math.PI * 2
-    const rr = r - depth * (1 - Math.cos(a * bumps)) / 2
-    pts.push(`${150 + rr * Math.cos(a)},${150 + rr * Math.sin(a)}`)
-  }
-  return `M${pts.join('L')}Z`
-}
+// ───── 2. 키보드 지도 — 자주 틀린 키가 달아오름 ─────
+const KEY_ROWS: [string, string][][] = [
+  [['`', '~'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', '('], ['0', ')'], ['-', '_'], ['=', '+']],
+  [...'qwertyuiop'].map((k): [string, string] => [k, '']).concat([['[', '{'], [']', '}'], ['\\', '|']]),
+  [...'asdfghjkl'].map((k): [string, string] => [k, '']).concat([[';', ':'], ["'", '"']]),
+  [...'zxcvbnm'].map((k): [string, string] => [k, '']).concat([[',', '<'], ['.', '>'], ['/', '?']]),
+]
+const MAX_MISS = Math.max(...Object.values(KEY_MISS))
 
-export function NicknameSticker({ tier }: { tier: Tier }) {
-  const [nick, desc] = NICKNAMES[PROFILE.weakKey]
+export function KeyMap({ tier }: { tier: Tier }) {
+  const worst = Object.entries(KEY_MISS).sort((a, b) => b[1] - a[1]).slice(0, 3)
   return (
-    <Shareable name="nickname" hint="약한 기호로 별명을 지어줘요 — 6종 중 하나">
-      <div className={`sticker mat-${tier.id}`}>
-        <svg viewBox="0 0 300 300" aria-hidden>
-          <path d={scallop(146, 22, 8)} className="sticker-edge" />
-          <circle cx="150" cy="150" r="128" className="sticker-face" />
-          <defs><path id="ring" d="M150,150 m-108,0 a108,108 0 1,1 216,0 a108,108 0 1,1 -216,0" /></defs>
-          <text className="sticker-ring"><textPath href="#ring">코드 타자 레이스 · 2026 올해의 별명 · 코드 타자 레이스 · 2026 올해의 별명 ·</textPath></text>
-        </svg>
-        <div className="sticker-body">
-          <span className="sticker-key">{PROFILE.weakKey}</span>
-          <b>{PROFILE.nightOwl ? '새벽의 ' : ''}{nick}</b>
-          <span>{desc}</span>
-          <small>{PROFILE.weakKey} 놓친 횟수 {PROFILE.weakCount}번</small>
+    <Shareable name="keymap" hint="자주 틀린 키일수록 빨갛게 달아올라요">
+      <div className="keymap">
+        <header>
+          <p className="km-kicker">{SAMPLE.player}의 손가락 지도</p>
+          <p className="km-title">닫는 괄호에서 가장 많이 미끄러져요</p>
+        </header>
+        <div className="km-board">
+          {KEY_ROWS.map((row, r) => (
+            <div key={r} className="km-row" style={{ paddingLeft: `${r * 14}px` }}>
+              {row.map(([k, shift]) => {
+                const miss = Math.max(KEY_MISS[k] ?? 0, KEY_MISS[shift] ?? 0)
+                return (
+                  <span key={k} className="km-key" style={{ '--heat': `${Math.round((miss / MAX_MISS) * 100)}%` } as React.CSSProperties}>
+                    {shift && <small>{shift}</small>}
+                    {k}
+                  </span>
+                )
+              })}
+            </div>
+          ))}
         </div>
+        <footer>
+          {worst.map(([k, v]) => <span key={k}><code>{k}</code> {v}%</span>)}
+          <span className="km-tier">{tier.name} · {tier.cpm}타</span>
+        </footer>
       </div>
     </Shareable>
   )
 }
 
-// ───── 3. 영수증 (Receiptify식) ─────
-export function Receipt({ tier }: { tier: Tier }) {
-  const total = Math.round(PROFILE.runs.reduce((n, r) => n + r.cpm, 0) / PROFILE.runs.length)
-  const errs = PROFILE.runs.reduce((n, r) => n + r.errors, 0)
-  return (
-    <Shareable name="receipt" hint="친 함수가 품목, 타수가 가격이에요">
-      <div className="receipt">
-        <p className="rc-center rc-store">코드 타자 레이스 마트</p>
-        <p className="rc-center">{SAMPLE.date} 23:47 · 손님 {SAMPLE.player}</p>
-        <p className="rc-center">주문번호 {SAMPLE.serial.replace('No. ', '')}</p>
-        <hr />
-        <p className="rc-row rc-head"><span>품목</span><span>타수</span></p>
-        {PROFILE.runs.map((r, i) => (
-          <div key={r.title}>
-            <p className="rc-row"><span>{String(i + 1).padStart(2, '0')} {r.title}</span><span>{r.cpm}</span></p>
-            {r.errors > 0 && <p className="rc-row rc-minus"><span>   오타 {r.errors}개</span><span>-{r.errors * 5}</span></p>}
-          </div>
-        ))}
-        <hr />
-        <p className="rc-row"><span>품목 수</span><span>{PROFILE.runs.length}</span></p>
-        <p className="rc-row"><span>오타 할인</span><span>-{errs * 5}</span></p>
-        <p className="rc-row rc-total"><span>평균 타수</span><span>{total}</span></p>
-        <p className="rc-row"><span>결제 수단</span><span>열 손가락</span></p>
-        <p className="rc-row"><span>등급</span><span>{tier.name}</span></p>
-        <hr />
-        <div className="barcode" />
-        <p className="rc-center">감사합니다 · 또 치러 오세요</p>
-      </div>
-    </Shareable>
-  )
-}
+// ───── 3. neofetch 터미널 ─────
+const LOGO = [
+  '  ____ ____',
+  ' / ___|  _ \\',
+  '| |   | |_) |',
+  '| |___|  _ <',
+  ' \\____|_| \\_\\',
+].join('\n')
 
-// ───── 4. 페스티벌 라인업 포스터 (Instafest식) ─────
-export function Lineup({ tier }: { tier: Tier }) {
-  const [head, ...rest] = PROFILE.libs
-  return (
-    <Shareable name="lineup" hint="많이 친 라이브러리일수록 크게 걸려요">
-      <div className={`poster p-${tier.id}`}>
-        <p className="poster-kicker">{SAMPLE.player}의</p>
-        <p className="poster-title">코드 타자<br />페스티벌 2026</p>
-        <div className="poster-lineup">
-          <p className="pl-head">{head.name}</p>
-          <p className="pl-2">{rest.slice(0, 2).map((l) => l.name).join(' · ')}</p>
-          <p className="pl-3">{rest.slice(2).map((l) => l.name).join(' · ')}</p>
-          <p className="pl-4">{PROFILE.runs.map((r) => r.title).join(' · ')}</p>
-        </div>
-        <p className="poster-foot">
-          <span>{PROFILE.plays}판 · {PROFILE.minutes}분</span>
-          <span>{tier.name}</span>
-        </p>
-      </div>
-    </Shareable>
-  )
-}
-
-// ───── 5. 결산 스토리 (Spotify Wrapped식, 9:16) ─────
-export function Story({ tier }: { tier: Tier }) {
-  const slides = [
-    { kicker: '2026 코드 타자 결산', big: `${PROFILE.plays}판`, text: `${PROFILE.minutes}분 동안 오픈소스를 손으로 읽었어요` },
-    { kicker: '가장 많이 친 기호', big: PROFILE.topKey, text: `${PROFILE.topKeyCount}번. 문장을 끝내는 데 진심이에요` },
-    { kicker: '제일 오래 붙잡은 라이브러리', big: PROFILE.libs[0].name, text: `${PROFILE.libs[0].plays}판. 이쯤 되면 메인테이너` },
-    { kicker: '그래서 당신은', big: tier.name, text: `${tier.cpm}타 · ${tier.rank}` },
+export function Neofetch({ tier }: { tier: Tier }) {
+  const rows: [string, string][] = [
+    ['등급', tier.name],
+    ['타수', `${tier.cpm}타/분 (${tier.rank})`],
+    ['정확도', `${tier.acc}%`],
+    ['일관성', `${PROFILE.consistency}%`],
+    ['플레이', `${PROFILE.plays}판 · ${PROFILE.minutes}분`],
+    ['주력', PROFILE.libs[0].name],
+    ['약점', `${PROFILE.weakKey}  (닫는 괄호)`],
+    ['자동완성', PROFILE.assist ? '켬' : '끔'],
   ]
-  const [i, setI] = useState(0)
-  useEffect(() => {
-    const t = setTimeout(() => setI((n) => (n + 1) % slides.length), 3500)
-    return () => clearTimeout(t)
-  }, [i, slides.length])
-  const s = slides[i]
   return (
-    <Shareable name={`story-${i + 1}`} hint="오른쪽을 누르면 다음, 왼쪽은 이전 · 지금 보이는 장이 저장돼요">
-      <div
-        className={`story s-${i}`}
-        onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect()
-          setI((n) => (e.clientX - r.left > r.width / 2 ? (n + 1) % slides.length : (n + slides.length - 1) % slides.length))
-        }}
-      >
-        <div className="story-bars">
-          {slides.map((_, k) => <span key={k} className={k < i ? 'full' : k === i ? 'run' : ''} />)}
+    <Shareable name="neofetch" hint="개발자들이 내 컴퓨터 자랑할 때 쓰는 그 화면">
+      <div className={`term tt-${tier.id}`}>
+        <div className="term-bar"><i /><i /><i /><span>{SAMPLE.player}@code-race: ~</span></div>
+        <div className="term-body">
+          <p className="term-cmd"><b>{SAMPLE.player}@code-race</b> ~ % neofetch</p>
+          <div className="term-grid">
+            <pre className="term-logo">{LOGO}</pre>
+            <div className="term-info">
+              <p className="term-host"><b>{SAMPLE.player}</b>@<b>code-race</b></p>
+              <p className="term-rule">{'-'.repeat(18)}</p>
+              {rows.map(([k, v]) => <p key={k}><b>{k}</b>: {v}</p>)}
+              <p className="term-colors">{['#ff6b6b', '#ffd36b', '#7dd3a8', '#6bc7ff', '#c49bff', '#ff8cc6', '#e6e8ee'].map((c) => <i key={c} style={{ background: c }} />)}</p>
+            </div>
+          </div>
+          <p className="term-cmd"><b>{SAMPLE.player}@code-race</b> ~ % <span className="term-caret" /></p>
         </div>
-        <p className="story-kicker">{s.kicker}</p>
-        <p key={i} className={`story-big ${s.big.length > 6 ? 'long' : ''}`}>{s.big}</p>
-        <p className="story-text">{s.text}</p>
-        <p className="story-foot">코드 타자 레이스 · {SAMPLE.player}</p>
+      </div>
+    </Shareable>
+  )
+}
+
+// ───── 4. RPG 능력치 ─────
+function radarPoints(values: number[], r: number, c: number) {
+  return values
+    .map((v, i) => {
+      const a = (Math.PI * 2 * i) / values.length - Math.PI / 2
+      return `${c + Math.cos(a) * r * (v / 100)},${c + Math.sin(a) * r * (v / 100)}`
+    })
+    .join(' ')
+}
+
+export function RpgStats({ tier }: { tier: Tier }) {
+  const C = 110
+  const R = 82
+  return (
+    <Shareable name="rpg" hint="여섯 능력치 · 레벨은 플레이 판 수">
+      <div className={`rpg rp-${tier.id}`}>
+        <header>
+          <div>
+            <p className="rpg-class">{tier.name}</p>
+            <p className="rpg-name">{SAMPLE.player} <span>Lv.{PROFILE.plays}</span></p>
+          </div>
+          <p className="rpg-cpm"><b>{tier.cpm}</b><small>타/분</small></p>
+        </header>
+        <div className="rpg-bars">
+          <p><span>HP 정확도</span><i><b style={{ width: `${tier.acc}%` }} /></i><em>{tier.acc}</em></p>
+          <p><span>MP 일관성</span><i><b className="mp" style={{ width: `${PROFILE.consistency}%` }} /></i><em>{PROFILE.consistency}</em></p>
+        </div>
+        <svg viewBox={`0 0 ${C * 2} ${C * 2}`} className="rpg-radar" aria-label="능력치 육각형">
+          {[1, 0.66, 0.33].map((k) => (
+            <polygon key={k} points={radarPoints(STATS.map(() => 100 * k), R, C)} className="rpg-grid" />
+          ))}
+          <polygon points={radarPoints(STATS.map((s) => s.value), R, C)} className="rpg-shape" />
+          {STATS.map((s, i) => {
+            const a = (Math.PI * 2 * i) / STATS.length - Math.PI / 2
+            return (
+              <text key={s.key} x={C + Math.cos(a) * (R + 18)} y={C + Math.sin(a) * (R + 18) + 4} textAnchor="middle">
+                {s.key} {s.value}
+              </text>
+            )
+          })}
+        </svg>
+        <ul className="rpg-skills">
+          <li><b>패시브</b> 자동완성 — Tab 한 번에 단어가 완성됨</li>
+          <li><b>디버프</b> 괄호 미아 — `)` 앞에서 9% 확률로 미끄러짐</li>
+        </ul>
+      </div>
+    </Shareable>
+  )
+}
+
+// ───── 5. 타자 잔디 ─────
+const GRASS: Record<TierId, string[]> = {
+  sprout: ['#1b2a1e', '#2d5a33', '#3f8a46', '#5fb862', '#8de08a'],
+  mid: ['#1a2230', '#1f4f8a', '#2b72c2', '#4f9bf0', '#8cc3ff'],
+  pro: ['#2a2312', '#6b4c12', '#a8761c', '#e0a630', '#ffd36b'],
+  king: ['#1e1833', '#4b2e8a', '#7048e8', '#a07dff', '#e2b6ff'],
+}
+
+export function Grass({ tier }: { tier: Tier }) {
+  const level = (n: number) => (n === 0 ? 0 : n <= 1 ? 1 : n <= 3 ? 2 : n <= 5 ? 3 : 4)
+  let streak = 0
+  let best = 0
+  for (const n of DAILY) {
+    streak = n ? streak + 1 : 0
+    best = Math.max(best, streak)
+  }
+  const total = DAILY.reduce((a, b) => a + b, 0)
+  return (
+    <Shareable name="grass" hint="깃허브 잔디처럼 하루하루 친 판 수">
+      <div className="grass">
+        <header>
+          <p className="gr-title"><b>{total}판</b> 최근 20주 동안</p>
+          <p className="gr-tier">{tier.name}</p>
+        </header>
+        <div className="gr-grid">
+          {DAILY.map((n, i) => <i key={i} style={{ background: GRASS[tier.id][level(n)] }} title={`${n}판`} />)}
+        </div>
+        <footer>
+          <span>연속 <b>{streak}일</b> · 최장 <b>{best}일</b></span>
+          <span className="gr-legend">적음 {GRASS[tier.id].map((c) => <i key={c} style={{ background: c }} />)} 많음</span>
+        </footer>
       </div>
     </Shareable>
   )
