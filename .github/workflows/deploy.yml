@@ -28,6 +28,9 @@ jobs:
       - run: pnpm build
         env:
           BASE_PATH: /code-race/
+          # 회사망용 대결 중계(TURN). 레포 Settings → Variables에 넣으면 켜짐 (프론트 공개용 키)
+          VITE_METERED_APP: ${{ vars.METERED_APP }}
+          VITE_METERED_KEY: ${{ vars.METERED_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

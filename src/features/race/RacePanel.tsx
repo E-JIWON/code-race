@@ -86,6 +86,7 @@ export function RacePanel({
       {alone && <p className="dim small">링크를 친구에게 보내면 여기 나타나요.</p>}
       <p className={`net ${waited && alone && (net.relays === 0 || net.p2pFailed) ? 'bad' : ''}`}>
         연결 서버 {net.relays}/{net.total}
+        {net.turn && ' · 중계 켬'}
         {net.p2pFailed
           ? ' · 친구를 찾았는데 직접 연결이 막혔어요 (방화벽). 둘 중 한 명이 휴대폰 핫스팟 같은 다른 망으로 바꿔 보세요.'
           : waited && alone && net.relays === 0
