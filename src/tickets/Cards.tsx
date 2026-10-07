@@ -5,14 +5,16 @@ import { AXES, KEY_MISS, PROFILE, SAMPLE, STAT_LINE, STATS, TIER_MIN, TIERS, TYP
 import { useTilt } from './useTilt'
 
 // 카드 하나 + 이미지 저장 버튼 (다섯 시안이 같이 씀)
-function Shareable({ name, children, hint }: { name: string; children: ReactNode; hint: string }) {
+type Piece = { label: string; selector: string; suffix: string } // 카드 일부만 따로 저장
+
+function Shareable({ name, children, hint, pieces = [] }: { name: string; children: ReactNode; hint: string; pieces?: Piece[] }) {
   const ref = useRef<HTMLDivElement>(null)
-  const save = () => {
-    if (!ref.current) return
-    void toPng(ref.current, { pixelRatio: 2 }).then((url) => {
+  const save = (el: HTMLElement | null | undefined, file: string) => {
+    if (!el) return
+    void toPng(el, { pixelRatio: 2, backgroundColor: '#0f1115' }).then((url) => {
       const a = document.createElement('a')
       a.href = url
-      a.download = `code-race-${name}.png`
+      a.download = `code-race-${file}.png`
       a.click()
     })
   }
@@ -22,9 +24,16 @@ function Shareable({ name, children, hint }: { name: string; children: ReactNode
         {children}
       </div>
       <p className="lab-hint">{hint}</p>
-      <button className="save" onClick={save}>
-        이미지 저장
-      </button>
+      <div className="save-row">
+        <button className="save" onClick={() => save(ref.current, name)}>
+          {pieces.length ? '합쳐서 저장' : '이미지 저장'}
+        </button>
+        {pieces.map((p) => (
+          <button key={p.suffix} className="save" onClick={() => save(ref.current?.querySelector<HTMLElement>(p.selector), `${name}-${p.suffix}`)}>
+            {p.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -142,7 +151,10 @@ function KeyHeat() {
   )
 }
 
-function Radar({ className }: { className: string }) {
+// 등급 강조색 — SVG는 CSS 클래스 색이 이미지 저장 때 빠져서 속성으로 직접 칠함
+const TIER_COLOR: Record<Tier['id'], string> = { sprout: '#8de08a', mid: '#8cc3ff', pro: '#ffd36b', king: '#c49bff' }
+
+function Radar({ className, color, ink = '#c9d1d9' }: { className: string; color: string; ink?: string }) {
   const C = 110
   const R = 82
   return (
@@ -155,7 +167,8 @@ function Radar({ className }: { className: string }) {
             R,
             C,
           )}
-          className="rpg-grid"
+          fill="none"
+          stroke="rgba(255,255,255,0.14)"
         />
       ))}
       <polygon
@@ -164,12 +177,24 @@ function Radar({ className }: { className: string }) {
           R,
           C,
         )}
-        className="rpg-shape"
+        fill={color}
+        fillOpacity={0.4}
+        stroke={color}
+        strokeWidth={2}
       />
       {STATS.map((s, i) => {
         const a = (Math.PI * 2 * i) / STATS.length - Math.PI / 2
         return (
-          <text key={s.key} x={C + Math.cos(a) * (R + 18)} y={C + Math.sin(a) * (R + 18) + 4} textAnchor="middle">
+          <text
+            key={s.key}
+            x={C + Math.cos(a) * (R + 18)}
+            y={C + Math.sin(a) * (R + 18) + 4}
+            textAnchor="middle"
+            fill={ink}
+            fontSize={10}
+            fontWeight={700}
+            fontFamily="-apple-system, 'Apple SD Gothic Neo', sans-serif"
+          >
             {s.key} {s.value}
           </text>
         )
@@ -352,13 +377,13 @@ export function RpgStats({ tier }: { tier: Tier }) {
             <em>{PROFILE.consistency}</em>
           </p>
         </div>
-        <Radar className="rpg-radar" />
+        <Radar className="rpg-radar" color={TIER_COLOR[tier.id]} ink="#f1ecd8" />
         <ul className="rpg-skills">
           <li>
             <b>패시브</b> 자동완성 — Tab 한 번에 단어가 완성됨
           </li>
           <li>
-            <b>디버프</b> 괄호 미아 — `)` 앞에서 9% 확률로 미끄러짐
+            <b>디버프</b> 괄호 미아 — ) 앞에서 9% 확률로 미끄러짐
           </li>
         </ul>
       </div>
@@ -593,7 +618,7 @@ export function CharacterSheet({ tier, vertical = false }: { tier: Tier; vertica
             <div>
               <p className="sheet-label"># 능력치</p>
               <div className="sheet-stats">
-                <Radar className="rpg-radar sheet-radar" />
+                <Radar className="rpg-radar sheet-radar" color={TIER_COLOR[tier.id]} />
                 <div className="sheet-verdict">
                   <p>당신은</p>
                   <p className="sheet-trait">{trait}</p>
@@ -638,9 +663,16 @@ export function SplitSheet({ tier }: { tier: Tier }) {
     </div>
   )
   return (
-    <Shareable name="sheet-split" hint="왼쪽은 실력, 오른쪽은 능력치 — 두 창을 나란히">
+    <Shareable
+      name="sheet-split"
+      hint="왼쪽은 실력, 오른쪽은 능력치 — 두 창을 나란히"
+      pieces={[
+        { label: '왼쪽만 저장', selector: '.split-left', suffix: 'left' },
+        { label: '오른쪽만 저장', selector: '.split-right', suffix: 'right' },
+      ]}
+    >
       <div className={`split tt-${tier.id}`}>
-        <div className="term sheet vertical">
+        <div className="term sheet vertical split-left">
           {bar('내 타자 실력')}
           <div className="term-body">
             <p className="term-cmd">
@@ -663,7 +695,7 @@ export function SplitSheet({ tier }: { tier: Tier }) {
             <p className="term-cmd">
               <b>{SAMPLE.player}@code-race</b> ~ % 내-능력치
             </p>
-            <Radar className="rpg-radar split-radar" />
+            <Radar className="rpg-radar split-radar" color={TIER_COLOR[tier.id]} />
             <p className="split-verdict">
               당신은 <b>{trait}</b> 타입이군요!
             </p>
