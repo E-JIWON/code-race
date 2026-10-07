@@ -247,3 +247,14 @@ h2 { font-size: 15px; margin: 0 0 10px; }
 .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .bar span { display: block; height: 100%; border-radius: 3px; transition: width 0.15s; }
 .pcpm { text-align: right; color: var(--ink-2); font: 13px var(--mono); }
+
+.sub-stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+.sub-stats b { color: var(--ink); font-family: var(--mono); }
+.graph { display: block; width: 100%; height: auto; margin-top: 14px; }
+.graph text { fill: var(--ink-3); font: 11px var(--mono); }
+.graph .grid { stroke: var(--line); stroke-width: 1; }
+.graph polyline { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.graph .cpm { stroke: var(--accent); stroke-width: 2.5; }
+.graph .raw { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.graph .err { fill: var(--danger); font-size: 13px; font-weight: 700; }
+.save { margin-left: auto; }

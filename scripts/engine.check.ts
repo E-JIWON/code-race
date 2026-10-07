@@ -2,6 +2,16 @@
 import assert from 'node:assert/strict'
 import { buildLines, closerOf, skipAuto, toChars, typedCount, wordAt, type Block } from '../src/engine.ts'
 import { LIBRARIES, rawUrl } from '../src/snippets.ts'
+import { consistency, perSecond, rawCpm } from '../src/stats.ts'
+
+// 결과 통계: 2초 동안 1초에 5타씩 → 300타/분, 고르면 일관성 100
+const g = perSecond([[100, 5, 0], [1500, 5, 1]], 2000)
+assert.deepEqual(g.cpm, [300, 300])
+assert.deepEqual(g.raw, [300, 360])
+assert.deepEqual(g.err, [0, 1])
+assert.equal(rawCpm([[100, 5, 0], [1500, 5, 1]], 2000), 330)
+assert.equal(consistency([300, 300, 300]), 100)
+assert.ok(consistency([100, 500, 100]) < 60)
 
 const render = (raw: string, b: Partial<Block> = {}) =>
   buildLines(raw, { from: 1, to: raw.split('\n').length, lang: 'js', ...b })
