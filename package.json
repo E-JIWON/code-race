@@ -1,7 +1,7 @@
 {
   "name": "code-race",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "format": "prettier --write src scripts",
     "typecheck": "tsc -b",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "demo:gif": "node scripts/demo-gif.ts"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",
@@ -21,10 +22,13 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^24.13.3",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "gifenc": "^1.0.3",
     "oxlint": "^1.81.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.9.9",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"

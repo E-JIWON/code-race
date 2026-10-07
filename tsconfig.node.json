@@ -2,7 +2,7 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "es2023",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM"], // scripts의 page.evaluate 코드는 브라우저에서 돎
     "types": ["node"],
     "skipLibCheck": true,
 
