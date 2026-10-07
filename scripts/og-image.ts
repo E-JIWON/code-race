@@ -43,7 +43,7 @@ ${
       </div>`
     : `<div class="win">${CODE.map(([c, t], i) => (c === 'br' ? '\n' : i === 2 ? `<span class="cur">${t[0]}</span><span class="todo">${t.slice(1)}</span>` : `<span class="${c}">${t}</span>`)).join('')}</div>`
 }
-<div class="foot"><div class="chips"><span>zustand</span><span>TanStack Query</span><span>Redux</span><span>React</span></div><span>code-race.jinsang-defense.workers.dev</span></div>`
+<div class="foot"><div class="chips"><span>zustand</span><span>TanStack Query</span><span>Redux</span><span>React</span></div><span>code-race.bonchil.workers.dev</span></div>`
 
 const browser = await chromium.launch({ channel: 'chrome' })
 const tab = await browser.newPage({ viewport: { width: 1200, height: 630 } })

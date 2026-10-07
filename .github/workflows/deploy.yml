@@ -45,8 +45,8 @@ jobs:
           mkdir site
           cat > site/index.html <<'HTML'
           <!doctype html><meta charset="utf-8"><title>코드 타자 레이스</title>
-          <script>location.replace('https://code-race.jinsang-defense.workers.dev/' + location.search)</script>
-          <a href="https://code-race.jinsang-defense.workers.dev/">코드 타자 레이스로 이동</a>
+          <script>location.replace('https://code-race.bonchil.workers.dev/' + location.search)</script>
+          <a href="https://code-race.bonchil.workers.dev/">코드 타자 레이스로 이동</a>
           HTML
           cp site/index.html site/404.html
       - uses: actions/upload-pages-artifact@v3
