@@ -106,3 +106,17 @@ test.describe('친구랑 대결 (네트워크 의존)', () => {
     await close()
   })
 })
+
+test.describe('연결 진단', () => {
+  test('릴레이에 붙으면 연결 서버 수가 보임', async ({ page }) => {
+    await page.goto('/?room=diag-ok-' + Date.now())
+    await expect(page.locator('.net')).toContainText(/연결 서버 [1-9]\/6/, { timeout: 15_000 })
+  })
+
+  test('업무망처럼 릴레이가 막히면 원인과 해결 방법을 안내함', async ({ page }) => {
+    await page.routeWebSocket(/.*/, (ws) => ws.close()) // 모든 웹소켓 차단
+    await page.goto('/?room=diag-blocked-' + Date.now())
+    await expect(page.locator('.net.bad')).toContainText('핫스팟', { timeout: 15_000 })
+    await expect(page.locator('.net')).toContainText('연결 서버 0/6')
+  })
+})

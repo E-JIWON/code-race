@@ -105,6 +105,7 @@ export function useRace({ s, dispatch, load, onError, progress }: Options) {
     count,
     copied,
     peers: room.peers,
+    net: room.net,
     canStart,
     show,
     startRace,

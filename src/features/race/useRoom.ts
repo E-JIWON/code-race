@@ -1,6 +1,6 @@
 // 친구랑 대결: 서버 없이 브라우저끼리 직접 연결 (WebRTC, 연결 주선은 공개 nostr 릴레이)
 import { useEffect, useRef, useState } from 'react'
-import { joinRoom, type MessageAction, type Room } from 'trystero'
+import { getRelaySockets, joinRoom, type MessageAction, type Room } from 'trystero'
 
 const APP_ID = 'bongchil-code-race'
 // trystero 기본 릴레이 28곳 중 일부는 죽어서 콘솔 오류만 남김 → 접속을 확인한 곳만 고정 (2026-10-07 확인)
@@ -13,23 +13,31 @@ const RELAYS = [
   'wss://bucket.coracle.social',
 ]
 
+// 연결 진단: 릴레이에 몇 곳 붙었는지(서로 찾기), 찾았는데 직접 연결이 막혔는지(방화벽)
+export type NetStatus = { relays: number; total: number; p2pFailed: boolean }
+
 export type Progress = { race: string; pos: number; cpm: number; acc: number; done: number | null }
 export type Peer = Partial<Progress> & { name: string }
 type Start = { race: string; id: string }
 
 // 개발 모드 StrictMode는 effect를 join→leave→join 하는데, trystero leave가 비동기로 릴레이 연결까지 정리해서
 // 다시 들어온 방이 조용해짐. 나가기를 잠깐 미루고 그 사이 다시 들어오면 취소해서 같은 방을 이어 씀.
-const rooms = new Map<string, { room: Room; refs: number; leaveTimer?: ReturnType<typeof setTimeout> }>()
-function acquireRoom(id: string) {
-  const entry = rooms.get(id)
-  if (entry) {
-    clearTimeout(entry.leaveTimer)
-    entry.refs++
-    return entry.room
+type Entry = { room: Room; refs: number; leaveTimer?: ReturnType<typeof setTimeout>; onP2pFail?: () => void }
+const rooms = new Map<string, Entry>()
+function acquireRoom(id: string, onP2pFail: () => void) {
+  const existing = rooms.get(id)
+  if (existing) {
+    clearTimeout(existing.leaveTimer)
+    existing.refs++
+    existing.onP2pFail = onP2pFail
+    return existing.room
   }
-  const room = joinRoom({ appId: APP_ID, relayConfig: { urls: RELAYS } }, id)
-  rooms.set(id, { room, refs: 1 })
-  return room
+  const entry = { refs: 1, onP2pFail } as Entry
+  entry.room = joinRoom({ appId: APP_ID, relayConfig: { urls: RELAYS } }, id, {
+    onJoinError: () => entry.onP2pFail?.(), // 신호는 주고받았는데 WebRTC 연결이 안 됨
+  })
+  rooms.set(id, entry)
+  return entry.room
 }
 function releaseRoom(id: string) {
   const entry = rooms.get(id)
@@ -42,6 +50,7 @@ function releaseRoom(id: string) {
 
 export function useRoom(roomId: string | null, name: string, onStart: (s: Start) => void) {
   const [peers, setPeers] = useState<Record<string, Peer>>({})
+  const [net, setNet] = useState<NetStatus>({ relays: 0, total: RELAYS.length, p2pFailed: false })
   const actions = useRef<{
     hello?: MessageAction<{ name: string }>
     start?: MessageAction<Start>
@@ -56,7 +65,12 @@ export function useRoom(roomId: string | null, name: string, onStart: (s: Start)
 
   useEffect(() => {
     if (!roomId) return
-    const room = acquireRoom(roomId)
+    const room = acquireRoom(roomId, () => setNet((n) => ({ ...n, p2pFailed: true })))
+    const poll = setInterval(() => {
+      const sockets = getRelaySockets() as Record<string, WebSocket>
+      const relays = Object.values(sockets).filter((s) => s.readyState === WebSocket.OPEN).length
+      setNet((n) => (n.relays === relays ? n : { ...n, relays }))
+    }, 1000)
     const hello = room.makeAction<{ name: string }>('hello')
     const start = room.makeAction<Start>('start')
     const prog = room.makeAction<Progress>('prog')
@@ -77,6 +91,7 @@ export function useRoom(roomId: string | null, name: string, onStart: (s: Start)
 
     return () => {
       actions.current = {}
+      clearInterval(poll)
       setPeers({})
       releaseRoom(roomId)
     }
@@ -88,6 +103,7 @@ export function useRoom(roomId: string | null, name: string, onStart: (s: Start)
 
   return {
     peers,
+    net,
     sendStart: (s: Start) => void actions.current.start?.send(s),
     sendProgress: (p: Progress) => void actions.current.prog?.send(p),
   }

@@ -489,3 +489,12 @@ h2 {
 .save {
   margin-left: auto;
 }
+
+.net {
+  margin: 8px 0 0;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.net.bad {
+  color: var(--danger);
+}

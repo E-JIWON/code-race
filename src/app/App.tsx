@@ -83,6 +83,7 @@ export default function App() {
           onNameChange={race.setName}
           me={{ pos: s.pos, cpm: liveCpm, done: finished ? elapsed : null }}
           peers={race.peers}
+          net={race.net}
           raceId={race.raceId}
           chars={chars}
           count={race.count}

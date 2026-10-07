@@ -14,7 +14,7 @@ zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치
 ![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6%20strict-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
-![Playwright](https://img.shields.io/badge/E2E-Playwright%2025%EA%B0%9C-2ead33?logo=playwright&logoColor=white)
+![Playwright](https://img.shields.io/badge/E2E-Playwright%2027%EA%B0%9C-2ead33?logo=playwright&logoColor=white)
 ![Backend](<https://img.shields.io/badge/%EB%B0%B1%EC%97%94%EB%93%9C-%EC%97%86%EC%9D%8C%20(P2P)-black>)
 
 <img src="docs/demo-typing.gif" alt="zustand useShallow를 치는 모습 — 오타, 자동완성 제안, 한글 해설 주석" width="720" />
@@ -74,7 +74,7 @@ zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치
 | 능력치 | 계산                                                    |
 | ------ | ------------------------------------------------------- |
 | 속도   | 이번 판 타수 (400타 = 100)                              |
-| 정확   | 이번 판 정확도 (80~100%를 0~100으로 넓힘)               |
+| 정확   | 이번 판 정확도 (80–100%를 0–100으로 넓힘)               |
 | 리듬   | 이번 판 일관성 — 초당 타수의 변동계수 (Monkeytype 방식) |
 | 기호   | 지금까지 기호(`(){}=>;` 등)를 맞게 친 비율              |
 | 끈기   | 지금까지 끝낸 판 수                                     |
@@ -116,7 +116,7 @@ pnpm dev            # http://localhost:5173
 | 명령                           | 하는 일                                                                                                   |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `pnpm build`                   | 타입 검사(`tsc -b`) + 프로덕션 빌드                                                                       |
-| `pnpm test:e2e`                | Playwright E2E 25개 (시스템 Chrome 사용)                                                                  |
+| `pnpm test:e2e`                | Playwright E2E 27개 (시스템 Chrome 사용)                                                                  |
 | `node scripts/engine.check.ts` | 코드 파싱·자동완성·통계·등급 계산 단위 검사 (`--net`을 붙이면 29개 함수를 원본에서 받아 해설 줄까지 검증) |
 | `pnpm lint` / `pnpm format`    | oxlint / prettier                                                                                         |
 | `pnpm demo:gif`                | README의 GIF를 실제 플레이로 다시 찍기                                                                    |
@@ -134,7 +134,7 @@ src/
 │  ├─ race/                 P2P 방 · 카운트다운 · 진행 공유 · 대결 패널
 │  └─ result/               결과 그래프 · 통계 · 누적 기록 · 캐릭터 카드
 └─ shared/                  localStorage · fetch 캐시 · PNG 저장
-e2e/                        Playwright (게임 22개 + 대결 3개)
+e2e/                        Playwright (게임 22개 + 대결·연결 진단 5개)
 scripts/                    단위 검사 · 데모 GIF 생성
 .github/workflows/          CI · GitHub Pages 배포
 ```
@@ -182,7 +182,7 @@ flowchart LR
 | 층        | 도구                                    | 다루는 것                                                                                                            |
 | --------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | 단위      | `scripts/engine.check.ts` (node:assert) | 주석 파싱, 괄호 짝, 키 기록 통계, 일관성, 등급 경계, 오타율 · `--net`으로 29개 함수 원본 검증                        |
-| E2E       | Playwright 25개 (시스템 Chrome)         | 완주, 오타, 한글 입력, Esc/Tab, 자동완성, 카드 저장 4종, 저장소 유지, 375·760px, 키보드만으로 조작, 두 브라우저 대결 |
+| E2E       | Playwright 27개 (시스템 Chrome)         | 완주, 오타, 한글 입력, Esc/Tab, 자동완성, 카드 저장 4종, 저장소 유지, 375·760px, 키보드만으로 조작, 두 브라우저 대결 |
 | 정적 검사 | TypeScript strict · oxlint · prettier   | CI에서 매 푸시마다                                                                                                   |
 
 **Lighthouse** (프로덕션 빌드)
@@ -230,7 +230,7 @@ SEO는 `robots.txt`만 빠져서 91이에요. GitHub Pages 하위 경로(`/code-
 ## 한계와 다음 할 일
 
 - 기록은 각자 브라우저(localStorage)에만 저장돼요. 랭킹은 없어요.
-- 대결은 공개 릴레이와 WebRTC에 기대요. 회사망처럼 막힌 네트워크끼리는 연결이 안 될 수 있어요.
+- 대결은 공개 릴레이와 WebRTC에 기대요. 회사·학교 망처럼 막힌 네트워크에선 연결이 안 될 수 있어요. 대결 칸 아래 「연결 서버 n/6」 진단이 어디서 막혔는지(서로 찾기 / 직접 연결) 알려주고, 휴대폰 핫스팟 같은 다른 망을 안내해요.
 - 등급 경계와 상위 %는 추정값이라, 실제 플레이 데이터가 쌓이면 보정이 필요해요.
 - 물리 키보드 전용이에요. 휴대폰에서는 결과·카드만 보기 좋게 맞췄어요.
 - 다음: 코스 늘리기(Vue · Svelte · React Hook Form), 공유 링크 미리보기(OG 이미지)
