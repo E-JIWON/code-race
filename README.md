@@ -16,6 +16,7 @@ zustand · TanStack Query · Jotai · Redux · React 코드를 한 함수씩 치
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 ![Playwright](https://img.shields.io/badge/E2E-Playwright%2027%EA%B0%9C-2ead33?logo=playwright&logoColor=white)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20Durable%20Objects-f38020?logo=cloudflare&logoColor=white)
+[![License](https://img.shields.io/github/license/E-JIWON/code-race?color=2ea043)](LICENSE)
 
 <img src="docs/demo-typing.gif" alt="zustand useShallow를 치는 모습 — 오타, 자동완성 제안, 한글 해설 주석" width="720" />
 
